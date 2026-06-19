@@ -43,6 +43,25 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@22.19.21)
 
+  packages/excel:
+    dependencies:
+      '@axi-office/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.0
+        version: 1.9.4
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.19.21)
+
 packages:
 
   '@babel/runtime@7.29.7':

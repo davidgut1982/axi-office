@@ -6,7 +6,6 @@
     "useIgnoreFile": true
   },
   "files": {
-    "include": ["packages/**/*.ts", "packages/**/*.js"],
     "ignore": ["**/dist/**", "**/node_modules/**"]
   },
   "formatter": {
@@ -22,9 +21,11 @@
       "suspicious": {
         "noExplicitAny": "off"
       },
-      "style": {
-        "noNonNullAssertion": "warn",
+      "complexity": {
         "useLiteralKeys": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "warn"
       }
     }
   },
