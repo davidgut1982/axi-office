@@ -1,41 +1,41 @@
 {
-  "name": "@axi-office/excel",
-  "version": "0.1.0",
-  "description": "AXI CLI for Excel — wraps negokaz/excel-mcp-server",
-  "keywords": ["axi", "agent", "cli", "excel", "mcp", "office"],
-  "license": "MIT",
-  "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": ["dist", "README.md"],
-  "bin": {
-    "excel-axi": "./dist/bin/excel-axi.js"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write ."
-  },
-  "dependencies": {
-    "@axi-office/core": "workspace:*"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@types/node": "^22.0.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
-  }
+	"name": "@axi-office/excel",
+	"version": "0.1.0",
+	"description": "AXI CLI for Excel — wraps negokaz/excel-mcp-server",
+	"keywords": ["axi", "agent", "cli", "excel", "mcp", "office"],
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": ["dist", "README.md"],
+	"bin": {
+		"excel-axi": "./dist/bin/excel-axi.js"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"dependencies": {
+		"@axi-office/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"@types/node": "^22.0.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
 }

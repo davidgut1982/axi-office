@@ -12,12 +12,12 @@ import { McpStdioClient } from "@axi-office/core";
 let _client: McpStdioClient | undefined;
 
 export function getClient(): McpStdioClient {
-  if (!_client) {
-    _client = new McpStdioClient({
-      command: "npx",
-      args: ["-y", "@negokaz/excel-mcp-server"],
-      name: "excel-mcp",
-    });
-  }
-  return _client;
+	if (!_client) {
+		_client = new McpStdioClient({
+			command: "npx",
+			args: ["-y", "@negokaz/excel-mcp-server"],
+			name: "excel-mcp",
+		});
+	}
+	return _client;
 }

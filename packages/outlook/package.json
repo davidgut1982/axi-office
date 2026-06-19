@@ -1,41 +1,41 @@
 {
-  "name": "@axi-office/outlook",
-  "version": "0.1.0",
-  "description": "AXI CLI for Outlook — wraps softeria/ms-365-mcp-server (mail, calendar, contacts)",
-  "keywords": ["axi", "agent", "cli", "outlook", "ms365", "mcp", "office"],
-  "license": "MIT",
-  "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": ["dist", "README.md"],
-  "bin": {
-    "outlook-axi": "./dist/bin/outlook-axi.js"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write ."
-  },
-  "dependencies": {
-    "@axi-office/core": "workspace:*"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@types/node": "^22.0.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
-  }
+	"name": "@axi-office/outlook",
+	"version": "0.1.0",
+	"description": "AXI CLI for Outlook — wraps softeria/ms-365-mcp-server (mail, calendar, contacts)",
+	"keywords": ["axi", "agent", "cli", "outlook", "ms365", "mcp", "office"],
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": ["dist", "README.md"],
+	"bin": {
+		"outlook-axi": "./dist/bin/outlook-axi.js"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"dependencies": {
+		"@axi-office/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"@types/node": "^22.0.0",
+		"typescript": "^5.7.0",
+		"vitest": "^3.0.0"
+	}
 }

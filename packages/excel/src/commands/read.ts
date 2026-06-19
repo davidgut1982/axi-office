@@ -10,22 +10,22 @@ import { AxiError, parseFlags, parseLimit } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function readCommand(args: string[]): Promise<unknown> {
-  const { positionals, flags } = parseFlags(args);
-  const [file, sheet, range] = positionals;
-  if (!file || !sheet) {
-    throw new AxiError("file and sheet are required", "VALIDATION_ERROR", [
-      "excel-axi read <file> <sheet> [range] [--limit N]",
-    ]);
-  }
+	const { positionals, flags } = parseFlags(args);
+	const [file, sheet, range] = positionals;
+	if (!file || !sheet) {
+		throw new AxiError("file and sheet are required", "VALIDATION_ERROR", [
+			"excel-axi read <file> <sheet> [range] [--limit N]",
+		]);
+	}
 
-  const toolArgs: Record<string, unknown> = {
-    fileAbsolutePath: file,
-    sheetName: sheet,
-  };
-  if (range) toolArgs.range = range;
-  if (flags.limit !== undefined) {
-    toolArgs.knownPagingRanges = parseLimit(flags.limit, 100, 10000);
-  }
+	const toolArgs: Record<string, unknown> = {
+		fileAbsolutePath: file,
+		sheetName: sheet,
+	};
+	if (range) toolArgs.range = range;
+	if (flags.limit !== undefined) {
+		toolArgs.knownPagingRanges = parseLimit(flags.limit, 100, 10000);
+	}
 
-  return getClient().callTool("excel_read_sheet", toolArgs);
+	return getClient().callTool("excel_read_sheet", toolArgs);
 }

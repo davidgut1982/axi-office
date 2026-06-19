@@ -9,24 +9,24 @@ import { AxiError, parseFlags } from "@axi-office/core";
 import mammoth from "mammoth";
 
 export async function readCommand(args: string[]): Promise<unknown> {
-  const { positionals, flags } = parseFlags(args);
-  const file = positionals[0];
-  if (!file) {
-    throw new AxiError("input.docx is required", "VALIDATION_ERROR", [
-      "word-axi read <in.docx> [--format raw|html]",
-    ]);
-  }
+	const { positionals, flags } = parseFlags(args);
+	const file = positionals[0];
+	if (!file) {
+		throw new AxiError("input.docx is required", "VALIDATION_ERROR", [
+			"word-axi read <in.docx> [--format raw|html]",
+		]);
+	}
 
-  const format = typeof flags.format === "string" ? flags.format : "raw";
-  if (format !== "raw" && format !== "html") {
-    throw new AxiError("--format must be raw or html", "VALIDATION_ERROR");
-  }
+	const format = typeof flags.format === "string" ? flags.format : "raw";
+	if (format !== "raw" && format !== "html") {
+		throw new AxiError("--format must be raw or html", "VALIDATION_ERROR");
+	}
 
-  if (format === "html") {
-    const result = await mammoth.convertToHtml({ path: file });
-    return { file, format, html: result.value };
-  }
+	if (format === "html") {
+		const result = await mammoth.convertToHtml({ path: file });
+		return { file, format, html: result.value };
+	}
 
-  const result = await mammoth.extractRawText({ path: file });
-  return { file, format, text: result.value };
+	const result = await mammoth.extractRawText({ path: file });
+	return { file, format, text: result.value };
 }

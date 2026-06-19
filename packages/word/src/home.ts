@@ -5,10 +5,10 @@
  */
 
 export function homeCommand(_args: string[]): Record<string, unknown> {
-  return {
-    bin: "word-axi",
-    description: "AXI CLI for Word (.docx)",
-    commands: ["create", "from-markdown", "read", "info", "patch"],
-    help: "Run `word-axi <command> --help` for details",
-  };
+	return {
+		bin: "word-axi",
+		description: "AXI CLI for Word (.docx)",
+		commands: ["create", "from-markdown", "read", "info", "patch"],
+		help: "Run `word-axi <command> --help` for details",
+	};
 }

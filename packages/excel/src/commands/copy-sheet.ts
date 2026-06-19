@@ -10,17 +10,17 @@ import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function copySheetCommand(args: string[]): Promise<unknown> {
-  const { positionals } = parseFlags(args);
-  const [file, src, dst] = positionals;
-  if (!file || !src || !dst) {
-    throw new AxiError("file, src and dst are required", "VALIDATION_ERROR", [
-      "excel-axi copy-sheet <file> <src> <dst>",
-    ]);
-  }
+	const { positionals } = parseFlags(args);
+	const [file, src, dst] = positionals;
+	if (!file || !src || !dst) {
+		throw new AxiError("file, src and dst are required", "VALIDATION_ERROR", [
+			"excel-axi copy-sheet <file> <src> <dst>",
+		]);
+	}
 
-  return getClient().callTool("excel_copy_sheet", {
-    fileAbsolutePath: file,
-    srcSheetName: src,
-    dstSheetName: dst,
-  });
+	return getClient().callTool("excel_copy_sheet", {
+		fileAbsolutePath: file,
+		srcSheetName: src,
+		dstSheetName: dst,
+	});
 }

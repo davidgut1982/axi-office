@@ -12,8 +12,8 @@
  * Result of parseFlags — positionals are non-flag tokens, flags are --key value pairs.
  */
 export interface ParsedArgs {
-  positionals: string[];
-  flags: Record<string, string | true>;
+	positionals: string[];
+	flags: Record<string, string | true>;
 }
 
 /**
@@ -23,34 +23,41 @@ export interface ParsedArgs {
  * Test: parseFlags(["--out", "file.txt", "--dry-run"], ["dry-run"]) →
  * { positionals: [], flags: { out: "file.txt", "dry-run": true } }.
  */
-export function parseFlags(args: string[], booleans: string[] = []): ParsedArgs {
-  const positionals: string[] = [];
-  const flags: Record<string, string | true> = {};
+export function parseFlags(
+	args: string[],
+	booleans: string[] = [],
+): ParsedArgs {
+	const positionals: string[] = [];
+	const flags: Record<string, string | true> = {};
 
-  for (let i = 0; i < args.length; i++) {
-    const token = args[i];
-    if (!token.startsWith("--")) {
-      positionals.push(token);
-      continue;
-    }
+	for (let i = 0; i < args.length; i++) {
+		const token = args[i];
+		if (!token.startsWith("--")) {
+			positionals.push(token);
+			continue;
+		}
 
-    const body = token.slice(2);
-    const eq = body.indexOf("=");
-    if (eq !== -1) {
-      flags[body.slice(0, eq)] = body.slice(eq + 1);
-      continue;
-    }
+		const body = token.slice(2);
+		const eq = body.indexOf("=");
+		if (eq !== -1) {
+			flags[body.slice(0, eq)] = body.slice(eq + 1);
+			continue;
+		}
 
-    const next = args[i + 1];
-    if (next !== undefined && !next.startsWith("--") && !booleans.includes(body)) {
-      flags[body] = next;
-      i++;
-    } else {
-      flags[body] = true;
-    }
-  }
+		const next = args[i + 1];
+		if (
+			next !== undefined &&
+			!next.startsWith("--") &&
+			!booleans.includes(body)
+		) {
+			flags[body] = next;
+			i++;
+		} else {
+			flags[body] = true;
+		}
+	}
 
-  return { positionals, flags };
+	return { positionals, flags };
 }
 
 /**
@@ -60,11 +67,15 @@ export function parseFlags(args: string[], booleans: string[] = []): ParsedArgs 
  * Test: parseLimit("5", 10, 100) → 5; parseLimit("999", 10, 100) → 100;
  * parseLimit(undefined, 10, 100) → 10.
  */
-export function parseLimit(value: unknown, fallback: number, max: number): number {
-  if (typeof value !== "string") return fallback;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-  return Math.min(parsed, max);
+export function parseLimit(
+	value: unknown,
+	fallback: number,
+	max: number,
+): number {
+	if (typeof value !== "string") return fallback;
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+	return Math.min(parsed, max);
 }
 
 /**
@@ -73,14 +84,14 @@ export function parseLimit(value: unknown, fallback: number, max: number): numbe
  * Test: parseKeyValuePairs(["name=foo", "type=bar"]) → { name: "foo", type: "bar" }.
  */
 export function parseKeyValuePairs(args: string[]): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const arg of args) {
-    const eq = arg.indexOf("=");
-    if (eq !== -1) {
-      result[arg.slice(0, eq)] = arg.slice(eq + 1);
-    }
-  }
-  return result;
+	const result: Record<string, string> = {};
+	for (const arg of args) {
+		const eq = arg.indexOf("=");
+		if (eq !== -1) {
+			result[arg.slice(0, eq)] = arg.slice(eq + 1);
+		}
+	}
+	return result;
 }
 
 /**
@@ -91,12 +102,12 @@ export function parseKeyValuePairs(args: string[]): Record<string, string> {
  * Test: coerceValue("true") → true; coerceValue("42") → 42; coerceValue("hi") → "hi".
  */
 export function coerceValue(value: string): string | number | boolean {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  if (value === "null") return "null";
-  const num = Number(value);
-  if (String(num) === value && Number.isFinite(num)) return num;
-  return value;
+	if (value === "true") return true;
+	if (value === "false") return false;
+	if (value === "null") return "null";
+	const num = Number(value);
+	if (String(num) === value && Number.isFinite(num)) return num;
+	return value;
 }
 
 /**
@@ -105,7 +116,7 @@ export function coerceValue(value: string): string | number | boolean {
  * Test: collapseWhitespace("  foo   bar  ") → "foo bar".
  */
 export function collapseWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+	return text.replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -114,7 +125,7 @@ export function collapseWhitespace(text: string): string {
  * Test: truncateLine("a very long string", 10) → "a very lon …".
  */
 export function truncateLine(text: string, max: number): string {
-  const line = collapseWhitespace(text);
-  if (line.length <= max) return line;
-  return `${line.slice(0, max).trimEnd()} …`;
+	const line = collapseWhitespace(text);
+	if (line.length <= max) return line;
+	return `${line.slice(0, max).trimEnd()} …`;
 }

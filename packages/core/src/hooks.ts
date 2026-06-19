@@ -22,23 +22,26 @@ import { installSessionStartHooks } from "axi-sdk-js";
  * Test: Call setupHooksCommand("my-axi", ["my-axi"]) and assert the returned object
  * contains { setup: "hooks installed or already up to date" }.
  */
-export function setupHooksCommand(marker: string, binaryNames: string[]): Record<string, unknown> {
-  const warnings: string[] = [];
+export function setupHooksCommand(
+	marker: string,
+	binaryNames: string[],
+): Record<string, unknown> {
+	const warnings: string[] = [];
 
-  installSessionStartHooks({
-    marker,
-    binaryNames,
-    onError: (msg: string) => warnings.push(msg),
-  });
+	installSessionStartHooks({
+		marker,
+		binaryNames,
+		onError: (msg: string) => warnings.push(msg),
+	});
 
-  const result: Record<string, unknown> = {
-    setup: "hooks installed or already up to date",
-    marker,
-  };
+	const result: Record<string, unknown> = {
+		setup: "hooks installed or already up to date",
+		marker,
+	};
 
-  if (warnings.length > 0) {
-    result.warnings = warnings;
-  }
+	if (warnings.length > 0) {
+		result.warnings = warnings;
+	}
 
-  return result;
+	return result;
 }
