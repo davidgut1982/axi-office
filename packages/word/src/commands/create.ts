@@ -16,35 +16,33 @@ import { type DocSpec, buildDocxBuffer } from "../docx-build.js";
  * Test: readSpec("{}") returns "{}"; readSpec("-") reads /dev/stdin.
  */
 function readSpec(arg: string): string {
-	if (arg === "-") {
-		return readFileSync(0, "utf8");
-	}
-	return arg;
+  if (arg === "-") {
+    return readFileSync(0, "utf8");
+  }
+  return arg;
 }
 
 export async function createCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
-	const [out, specArg] = positionals;
-	if (!out || !specArg) {
-		throw new AxiError(
-			"out path and spec-json are required",
-			"VALIDATION_ERROR",
-			["word-axi create <out.docx> <spec-json|->"],
-		);
-	}
+  const { positionals } = parseFlags(args);
+  const [out, specArg] = positionals;
+  if (!out || !specArg) {
+    throw new AxiError("out path and spec-json are required", "VALIDATION_ERROR", [
+      "word-axi create <out.docx> <spec-json|->",
+    ]);
+  }
 
-	let spec: DocSpec;
-	try {
-		spec = JSON.parse(readSpec(specArg)) as DocSpec;
-	} catch {
-		throw new AxiError("spec-json is not valid JSON", "VALIDATION_ERROR");
-	}
-	if (!spec || !Array.isArray(spec.sections)) {
-		throw new AxiError("spec must have a sections array", "VALIDATION_ERROR");
-	}
+  let spec: DocSpec;
+  try {
+    spec = JSON.parse(readSpec(specArg)) as DocSpec;
+  } catch {
+    throw new AxiError("spec-json is not valid JSON", "VALIDATION_ERROR");
+  }
+  if (!spec || !Array.isArray(spec.sections)) {
+    throw new AxiError("spec must have a sections array", "VALIDATION_ERROR");
+  }
 
-	const buffer = await buildDocxBuffer(spec);
-	writeFileSync(out, buffer);
+  const buffer = await buildDocxBuffer(spec);
+  writeFileSync(out, buffer);
 
-	return { created: out, bytes: buffer.length, sections: spec.sections.length };
+  return { created: out, bytes: buffer.length, sections: spec.sections.length };
 }

@@ -12,26 +12,24 @@ import { buildDocxBuffer } from "../docx-build.js";
 import { parseMarkdown } from "../markdown.js";
 
 export async function fromMarkdownCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
-	const [input, out] = positionals;
-	if (!input || !out) {
-		throw new AxiError(
-			"input.md and out.docx are required",
-			"VALIDATION_ERROR",
-			["word-axi from-markdown <in.md> <out.docx>"],
-		);
-	}
+  const { positionals } = parseFlags(args);
+  const [input, out] = positionals;
+  if (!input || !out) {
+    throw new AxiError("input.md and out.docx are required", "VALIDATION_ERROR", [
+      "word-axi from-markdown <in.md> <out.docx>",
+    ]);
+  }
 
-	let md: string;
-	try {
-		md = readFileSync(input, "utf8");
-	} catch {
-		throw new AxiError(`cannot read markdown file: ${input}`, "IO_ERROR");
-	}
+  let md: string;
+  try {
+    md = readFileSync(input, "utf8");
+  } catch {
+    throw new AxiError(`cannot read markdown file: ${input}`, "IO_ERROR");
+  }
 
-	const spec = parseMarkdown(md);
-	const buffer = await buildDocxBuffer(spec);
-	writeFileSync(out, buffer);
+  const spec = parseMarkdown(md);
+  const buffer = await buildDocxBuffer(spec);
+  writeFileSync(out, buffer);
 
-	return { created: out, bytes: buffer.length, sections: spec.sections.length };
+  return { created: out, bytes: buffer.length, sections: spec.sections.length };
 }

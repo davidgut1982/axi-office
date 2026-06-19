@@ -13,12 +13,12 @@ import { McpStdioClient } from "@axi-office/core";
 let _client: McpStdioClient | undefined;
 
 export function getClient(): McpStdioClient {
-	if (!_client) {
-		_client = new McpStdioClient({
-			command: "npx",
-			args: ["-y", "@softeria/ms-365-mcp-server", "--preset", "outlook"],
-			name: "ms-365-mcp",
-		});
-	}
-	return _client;
+  if (!_client) {
+    _client = new McpStdioClient({
+      command: "npx",
+      args: ["-y", "@softeria/ms-365-mcp-server", "--preset", "outlook"],
+      name: "ms-365-mcp",
+    });
+  }
+  return _client;
 }

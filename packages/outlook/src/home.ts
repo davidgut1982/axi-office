@@ -5,20 +5,20 @@
  */
 
 export function homeCommand(_args: string[]): Record<string, unknown> {
-	return {
-		bin: "outlook-axi",
-		description: "AXI CLI for Outlook (via softeria/ms-365-mcp-server)",
-		commands: [
-			"mail-list",
-			"mail-get",
-			"mail-send",
-			"folders",
-			"cal-list",
-			"cal-view",
-			"cal-create",
-			"contacts-list",
-			"login",
-		],
-		help: "Run `outlook-axi <command> --help` for details",
-	};
+  return {
+    bin: "outlook-axi",
+    description: "AXI CLI for Outlook (via softeria/ms-365-mcp-server)",
+    commands: [
+      "mail-list",
+      "mail-get",
+      "mail-send",
+      "folders",
+      "cal-list",
+      "cal-view",
+      "cal-create",
+      "contacts-list",
+      "login",
+    ],
+    help: "Run `outlook-axi <command> --help` for details",
+  };
 }

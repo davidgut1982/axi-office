@@ -10,35 +10,30 @@ import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function writeCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
-	const [file, sheet, range, valuesJson] = positionals;
-	if (!file || !sheet || !range || !valuesJson) {
-		throw new AxiError(
-			"file, sheet, range and values-json are required",
-			"VALIDATION_ERROR",
-			["excel-axi write <file> <sheet> <range> <values-json>"],
-		);
-	}
+  const { positionals } = parseFlags(args);
+  const [file, sheet, range, valuesJson] = positionals;
+  if (!file || !sheet || !range || !valuesJson) {
+    throw new AxiError("file, sheet, range and values-json are required", "VALIDATION_ERROR", [
+      "excel-axi write <file> <sheet> <range> <values-json>",
+    ]);
+  }
 
-	let values: unknown;
-	try {
-		values = JSON.parse(valuesJson);
-	} catch {
-		throw new AxiError("values-json is not valid JSON", "VALIDATION_ERROR", [
-			'Example: \'[["a","b"],[1,2]]\'',
-		]);
-	}
-	if (!Array.isArray(values)) {
-		throw new AxiError(
-			"values-json must be a JSON array of rows",
-			"VALIDATION_ERROR",
-		);
-	}
+  let values: unknown;
+  try {
+    values = JSON.parse(valuesJson);
+  } catch {
+    throw new AxiError("values-json is not valid JSON", "VALIDATION_ERROR", [
+      'Example: \'[["a","b"],[1,2]]\'',
+    ]);
+  }
+  if (!Array.isArray(values)) {
+    throw new AxiError("values-json must be a JSON array of rows", "VALIDATION_ERROR");
+  }
 
-	return getClient().callTool("excel_write_to_sheet", {
-		fileAbsolutePath: file,
-		sheetName: sheet,
-		range,
-		values,
-	});
+  return getClient().callTool("excel_write_to_sheet", {
+    fileAbsolutePath: file,
+    sheetName: sheet,
+    range,
+    values,
+  });
 }

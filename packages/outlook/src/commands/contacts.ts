@@ -9,10 +9,10 @@ import { parseFlags, parseLimit } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function contactsListCommand(args: string[]): Promise<unknown> {
-	const { flags } = parseFlags(args);
-	const toolArgs: Record<string, unknown> = {};
-	if (flags.limit !== undefined) {
-		toolArgs.$top = parseLimit(flags.limit, 25, 100);
-	}
-	return getClient().callTool("list-outlook-contacts", toolArgs);
+  const { flags } = parseFlags(args);
+  const toolArgs: Record<string, unknown> = {};
+  if (flags.limit !== undefined) {
+    toolArgs.$top = parseLimit(flags.limit, 25, 100);
+  }
+  return getClient().callTool("list-outlook-contacts", toolArgs);
 }

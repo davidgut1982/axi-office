@@ -10,32 +10,30 @@ import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function formatRangeCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
-	const [file, sheet, range, formatJson] = positionals;
-	if (!file || !sheet || !range || !formatJson) {
-		throw new AxiError(
-			"file, sheet, range and format-json are required",
-			"VALIDATION_ERROR",
-			["excel-axi format-range <file> <sheet> <range> <format-json>"],
-		);
-	}
+  const { positionals } = parseFlags(args);
+  const [file, sheet, range, formatJson] = positionals;
+  if (!file || !sheet || !range || !formatJson) {
+    throw new AxiError("file, sheet, range and format-json are required", "VALIDATION_ERROR", [
+      "excel-axi format-range <file> <sheet> <range> <format-json>",
+    ]);
+  }
 
-	let format: unknown;
-	try {
-		format = JSON.parse(formatJson);
-	} catch {
-		throw new AxiError("format-json is not valid JSON", "VALIDATION_ERROR", [
-			'Example: \'{"bold":true,"fontSize":12}\'',
-		]);
-	}
-	if (typeof format !== "object" || format === null || Array.isArray(format)) {
-		throw new AxiError("format-json must be a JSON object", "VALIDATION_ERROR");
-	}
+  let format: unknown;
+  try {
+    format = JSON.parse(formatJson);
+  } catch {
+    throw new AxiError("format-json is not valid JSON", "VALIDATION_ERROR", [
+      'Example: \'{"bold":true,"fontSize":12}\'',
+    ]);
+  }
+  if (typeof format !== "object" || format === null || Array.isArray(format)) {
+    throw new AxiError("format-json must be a JSON object", "VALIDATION_ERROR");
+  }
 
-	return getClient().callTool("excel_format_range", {
-		fileAbsolutePath: file,
-		sheetName: sheet,
-		range,
-		...(format as Record<string, unknown>),
-	});
+  return getClient().callTool("excel_format_range", {
+    fileAbsolutePath: file,
+    sheetName: sheet,
+    range,
+    ...(format as Record<string, unknown>),
+  });
 }

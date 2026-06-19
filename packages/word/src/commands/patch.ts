@@ -11,49 +11,47 @@ import { AxiError, parseFlags } from "@axi-office/core";
 import { type IPatch, PatchType, TextRun, patchDocument } from "docx";
 
 export async function patchCommand(args: string[]): Promise<unknown> {
-	const { positionals, flags } = parseFlags(args);
-	const [file, dataJson] = positionals;
-	if (!file || !dataJson) {
-		throw new AxiError(
-			"input.docx and data-json are required",
-			"VALIDATION_ERROR",
-			["word-axi patch <in.docx> <data-json> [--out FILE]"],
-		);
-	}
+  const { positionals, flags } = parseFlags(args);
+  const [file, dataJson] = positionals;
+  if (!file || !dataJson) {
+    throw new AxiError("input.docx and data-json are required", "VALIDATION_ERROR", [
+      "word-axi patch <in.docx> <data-json> [--out FILE]",
+    ]);
+  }
 
-	let data: unknown;
-	try {
-		data = JSON.parse(dataJson);
-	} catch {
-		throw new AxiError("data-json is not valid JSON", "VALIDATION_ERROR");
-	}
-	if (typeof data !== "object" || data === null || Array.isArray(data)) {
-		throw new AxiError("data-json must be a JSON object", "VALIDATION_ERROR");
-	}
+  let data: unknown;
+  try {
+    data = JSON.parse(dataJson);
+  } catch {
+    throw new AxiError("data-json is not valid JSON", "VALIDATION_ERROR");
+  }
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new AxiError("data-json must be a JSON object", "VALIDATION_ERROR");
+  }
 
-	const patches: Record<string, IPatch> = {};
-	for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-		patches[key] = {
-			type: PatchType.PARAGRAPH,
-			children: [new TextRun(String(value))],
-		};
-	}
+  const patches: Record<string, IPatch> = {};
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+    patches[key] = {
+      type: PatchType.PARAGRAPH,
+      children: [new TextRun(String(value))],
+    };
+  }
 
-	let input: Buffer;
-	try {
-		input = readFileSync(file);
-	} catch {
-		throw new AxiError(`cannot read docx file: ${file}`, "IO_ERROR");
-	}
+  let input: Buffer;
+  try {
+    input = readFileSync(file);
+  } catch {
+    throw new AxiError(`cannot read docx file: ${file}`, "IO_ERROR");
+  }
 
-	const patched = await patchDocument({
-		outputType: "nodebuffer",
-		data: input,
-		patches,
-	});
+  const patched = await patchDocument({
+    outputType: "nodebuffer",
+    data: input,
+    patches,
+  });
 
-	const out = typeof flags.out === "string" ? flags.out : file;
-	writeFileSync(out, patched);
+  const out = typeof flags.out === "string" ? flags.out : file;
+  writeFileSync(out, patched);
 
-	return { patched: out, keys: Object.keys(patches) };
+  return { patched: out, keys: Object.keys(patches) };
 }

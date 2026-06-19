@@ -22,24 +22,24 @@ Commands:
 Run \`excel-axi <command> --help\` for per-command help.`;
 
 export const COMMAND_HELP: Record<string, string> = {
-	sheets: `excel-axi sheets <file>
+  sheets: `excel-axi sheets <file>
 
 Describe all sheets in the workbook at <file>.`,
-	read: `excel-axi read <file> <sheet> [range] [--limit N]
+  read: `excel-axi read <file> <sheet> [range] [--limit N]
 
 Read cell values from <sheet>. Optional A1 <range> (e.g. A1:C10).
 --limit N   cap the number of returned rows`,
-	write: `excel-axi write <file> <sheet> <range> <values-json>
+  write: `excel-axi write <file> <sheet> <range> <values-json>
 
 Write a 2D array of values to <range>.
 <values-json> is a JSON array of rows, e.g. '[["a","b"],[1,2]]'.`,
-	"create-table": `excel-axi create-table <file> <sheet> <range> [name]
+  "create-table": `excel-axi create-table <file> <sheet> <range> [name]
 
 Create a table over <range>. Optional table [name].`,
-	"copy-sheet": `excel-axi copy-sheet <file> <src> <dst>
+  "copy-sheet": `excel-axi copy-sheet <file> <src> <dst>
 
 Copy sheet <src> to a new sheet named <dst>.`,
-	"format-range": `excel-axi format-range <file> <sheet> <range> <format-json>
+  "format-range": `excel-axi format-range <file> <sheet> <range> <format-json>
 
 Apply formatting to <range>. <format-json> is a JSON object of style props.`,
 };

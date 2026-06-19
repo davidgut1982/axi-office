@@ -15,28 +15,28 @@ import type { DocSection, DocSpec, InlineRun } from "./docx-build.js";
  * Test: parseInline("**x**") returns [{ text: "x", bold: true }].
  */
 export function parseInline(text: string): InlineRun[] {
-	const runs: InlineRun[] = [];
-	const regex = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)/g;
-	let lastIndex = 0;
-	let match: RegExpExecArray | null = regex.exec(text);
+  const runs: InlineRun[] = [];
+  const regex = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = regex.exec(text);
 
-	while (match !== null) {
-		if (match.index > lastIndex) {
-			runs.push({ text: text.slice(lastIndex, match.index) });
-		}
-		if (match[2] !== undefined) {
-			runs.push({ text: match[2], bold: true });
-		} else if (match[4] !== undefined) {
-			runs.push({ text: match[4], italics: true });
-		}
-		lastIndex = regex.lastIndex;
-		match = regex.exec(text);
-	}
+  while (match !== null) {
+    if (match.index > lastIndex) {
+      runs.push({ text: text.slice(lastIndex, match.index) });
+    }
+    if (match[2] !== undefined) {
+      runs.push({ text: match[2], bold: true });
+    } else if (match[4] !== undefined) {
+      runs.push({ text: match[4], italics: true });
+    }
+    lastIndex = regex.lastIndex;
+    match = regex.exec(text);
+  }
 
-	if (lastIndex < text.length) {
-		runs.push({ text: text.slice(lastIndex) });
-	}
-	return runs.length > 0 ? runs : [{ text }];
+  if (lastIndex < text.length) {
+    runs.push({ text: text.slice(lastIndex) });
+  }
+  return runs.length > 0 ? runs : [{ text }];
 }
 
 /**
@@ -46,45 +46,45 @@ export function parseInline(text: string): InlineRun[] {
  * Test: parseMarkdown("- a\\n- b") yields one list section with items ["a","b"].
  */
 export function parseMarkdown(md: string): DocSpec {
-	const sections: DocSection[] = [];
-	const lines = md.split(/\r?\n/);
-	let listBuffer: string[] = [];
+  const sections: DocSection[] = [];
+  const lines = md.split(/\r?\n/);
+  let listBuffer: string[] = [];
 
-	const flushList = () => {
-		if (listBuffer.length > 0) {
-			sections.push({ type: "list", items: listBuffer });
-			listBuffer = [];
-		}
-	};
+  const flushList = () => {
+    if (listBuffer.length > 0) {
+      sections.push({ type: "list", items: listBuffer });
+      listBuffer = [];
+    }
+  };
 
-	for (const rawLine of lines) {
-		const line = rawLine.trimEnd();
-		if (line.trim() === "") {
-			flushList();
-			continue;
-		}
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (line.trim() === "") {
+      flushList();
+      continue;
+    }
 
-		const heading = /^(#{1,6})\s+(.*)$/.exec(line);
-		if (heading) {
-			flushList();
-			sections.push({
-				type: "heading",
-				level: heading[1].length,
-				text: heading[2].trim(),
-			});
-			continue;
-		}
+    const heading = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (heading) {
+      flushList();
+      sections.push({
+        type: "heading",
+        level: heading[1].length,
+        text: heading[2].trim(),
+      });
+      continue;
+    }
 
-		const bullet = /^[-*]\s+(.*)$/.exec(line.trim());
-		if (bullet) {
-			listBuffer.push(bullet[1].trim());
-			continue;
-		}
+    const bullet = /^[-*]\s+(.*)$/.exec(line.trim());
+    if (bullet) {
+      listBuffer.push(bullet[1].trim());
+      continue;
+    }
 
-		flushList();
-		sections.push({ type: "paragraph", runs: parseInline(line.trim()) });
-	}
+    flushList();
+    sections.push({ type: "paragraph", runs: parseInline(line.trim()) });
+  }
 
-	flushList();
-	return { sections };
+  flushList();
+  return { sections };
 }
