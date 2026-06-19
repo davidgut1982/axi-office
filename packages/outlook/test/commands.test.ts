@@ -14,11 +14,7 @@ vi.mock("../src/client.js", () => ({
 	getClient: () => ({ callTool: mockCallTool, close: vi.fn() }),
 }));
 
-import {
-	calCreateCommand,
-	calListCommand,
-	calViewCommand,
-} from "../src/commands/calendar.js";
+import { calCreateCommand, calListCommand, calViewCommand } from "../src/commands/calendar.js";
 import { contactsListCommand } from "../src/commands/contacts.js";
 import { loginCommand } from "../src/commands/login.js";
 import {
@@ -94,9 +90,7 @@ describe("outlook calendar commands", () => {
 	});
 
 	it("cal-view requires start and end", async () => {
-		await expect(calViewCommand(["only-start"])).rejects.toBeInstanceOf(
-			AxiError,
-		);
+		await expect(calViewCommand(["only-start"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("cal-create parses attendees", async () => {

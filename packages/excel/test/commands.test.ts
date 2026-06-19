@@ -72,7 +72,7 @@ describe("excel commands", () => {
 
 	it("write rejects invalid json", async () => {
 		await expect(
-			writeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B1", "not-json"]),
+			writeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B1", "not-json"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
@@ -96,12 +96,7 @@ describe("excel commands", () => {
 	});
 
 	it("format-range merges parsed format json", async () => {
-		await formatRangeCommand([
-			"/tmp/x.xlsx",
-			"Sheet1",
-			"A1:B2",
-			'{"bold":true}',
-		]);
+		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", '{"bold":true}']);
 		expect(mockCallTool).toHaveBeenCalledWith("excel_format_range", {
 			fileAbsolutePath: "/tmp/x.xlsx",
 			sheetName: "Sheet1",
@@ -112,7 +107,7 @@ describe("excel commands", () => {
 
 	it("format-range rejects non-object json", async () => {
 		await expect(
-			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", "[1,2]"]),
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", "[1,2]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 });

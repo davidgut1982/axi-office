@@ -58,9 +58,7 @@ describe("create + read round trip", () => {
 	});
 
 	it("rejects a spec without sections", async () => {
-		await expect(
-			createCommand([join(dir, "bad.docx"), "{}"]),
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(createCommand([join(dir, "bad.docx"), "{}"])).rejects.toBeInstanceOf(AxiError);
 	});
 });
 
@@ -124,9 +122,9 @@ describe("patch", () => {
 	});
 
 	it("rejects non-object data json", async () => {
-		await expect(
-			patchCommand([join(dir, "template.docx"), "[1,2]"]),
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(patchCommand([join(dir, "template.docx"), "[1,2]"])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 });
 

@@ -9,15 +9,15 @@ export { getClient } from "./client.js";
 export { TOP_LEVEL_HELP, COMMAND_HELP } from "./help.js";
 export { homeCommand } from "./home.js";
 export {
-  mailListCommand,
-  mailGetCommand,
-  mailSendCommand,
-  foldersCommand,
+	mailListCommand,
+	mailGetCommand,
+	mailSendCommand,
+	foldersCommand,
 } from "./commands/mail.js";
 export {
-  calListCommand,
-  calViewCommand,
-  calCreateCommand,
+	calListCommand,
+	calViewCommand,
+	calCreateCommand,
 } from "./commands/calendar.js";
 export { contactsListCommand } from "./commands/contacts.js";
 export { loginCommand } from "./commands/login.js";
