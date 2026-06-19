@@ -5,7 +5,7 @@
  * The tests verify argument shaping and lifecycle behavior.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { McpClientError, McpStdioClient } from "../src/mcp-client.js";
+import { McpClientError, McpStdioClient, _getLiveClientsForTest } from "../src/mcp-client.js";
 
 // ---------------------------------------------------------------------------
 // Mock @modelcontextprotocol/sdk
@@ -143,6 +143,80 @@ describe("McpStdioClient", () => {
 		const client = new McpStdioClient({ command: "npx", args: ["mcp"] });
 		await expect(client.close()).resolves.toBeUndefined();
 		expect(mockClose).not.toHaveBeenCalled();
+	});
+
+	it("removes the client from the live-clients registry after close()", async () => {
+		mockCallTool.mockResolvedValue({ content: [{ type: "text", text: "{}" }] });
+
+		const client = new McpStdioClient({ command: "npx", args: ["mcp"] });
+		await client.connect();
+
+		// After a successful connect the client is registered for signal teardown.
+		expect(_getLiveClientsForTest().has(client)).toBe(true);
+
+		await client.close();
+
+		// After close it must be removed so signal handlers no longer touch it.
+		expect(_getLiveClientsForTest().has(client)).toBe(false);
+	});
+
+	it("close() during an in-flight connect settles the connect before tearing down", async () => {
+		// Connect resolves only when we release it; close() must wait for that.
+		let releaseConnect: (() => void) | undefined;
+		mockConnect.mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					releaseConnect = resolve;
+				})
+		);
+
+		const client = new McpStdioClient({ command: "npx", args: ["mcp"] });
+
+		// Kick off connect but do NOT await it — it is now in-flight.
+		const connecting = client.connect();
+
+		// Begin closing while connect is still pending.
+		let closeResolved = false;
+		const closing = client.close().then(() => {
+			closeResolved = true;
+		});
+
+		// Give the event loop a tick: close() must still be pending because the
+		// in-flight connect has not settled yet.
+		await Promise.resolve();
+		expect(closeResolved).toBe(false);
+
+		// Release the connect; both promises should now settle without a zombie.
+		releaseConnect?.();
+		await connecting;
+		await closing;
+
+		expect(closeResolved).toBe(true);
+		// Teardown completed: client.close() was invoked and registry is clean.
+		expect(mockClose).toHaveBeenCalledOnce();
+		expect(_getLiveClientsForTest().has(client)).toBe(false);
+	});
+
+	it("connect() rejects with CONNECT_TIMEOUT when the handshake never resolves", async () => {
+		// Transport connect never resolves — simulates a server that spawns but hangs.
+		mockConnect.mockImplementation(() => new Promise<void>(() => {}));
+
+		const client = new McpStdioClient({ command: "npx", args: ["mcp"], name: "hang-mcp" });
+
+		const start = Date.now();
+		await expect(client.connect({ connectTimeoutMs: 100 })).rejects.toMatchObject({
+			code: "CONNECT_TIMEOUT",
+		});
+		const elapsed = Date.now() - start;
+
+		// Should reject promptly (within ~200ms), not hang.
+		expect(elapsed).toBeLessThan(200);
+
+		// connectPromise must be cleared so a retry is possible.
+		mockConnect.mockResolvedValue(undefined);
+		mockCallTool.mockResolvedValue({ content: [{ type: "text", text: '{"ok":true}' }] });
+		const result = await client.callTool("ping", {});
+		expect(result).toEqual({ ok: true });
 	});
 
 	it("clears connectPromise on connect failure so a subsequent call retries", async () => {

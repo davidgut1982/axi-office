@@ -47,6 +47,12 @@ export interface McpStdioClientOptions {
 	name?: string;
 	/** Version string sent in client info (defaults to "1.0.0"). */
 	version?: string;
+	/**
+	 * Milliseconds to wait for the SDK connect (subprocess spawn + handshake)
+	 * before rejecting with a CONNECT_TIMEOUT error. Defaults to 30000. Set to 0
+	 * (or a negative value) to disable the timeout entirely.
+	 */
+	connectTimeoutMs?: number;
 }
 
 /**
@@ -66,15 +72,80 @@ export interface McpStdioClientOptions {
 const _liveClients = new Set<McpStdioClient>();
 let _signalHandlersRegistered = false;
 
+/**
+ * Why: The live-clients registry is module-private (not part of the public API),
+ * but tests must assert that connect()/close() add and remove instances so that
+ * signal-handler teardown only touches still-open clients.
+ * What: Returns the internal live-clients Set for inspection. Test-only; not
+ * re-exported from the package index.
+ * Test: Used by the test suite to assert registry membership after connect/close.
+ */
+export function _getLiveClientsForTest(): ReadonlySet<McpStdioClient> {
+	return _liveClients;
+}
+
+/**
+ * Whether the module-level signal handlers call process.exit() after closing
+ * clients. Defaults to true (CLI behavior). Toggled via setAutoExitOnSignal().
+ */
+let autoExitOnSignal = true;
+
+/** POSIX exit codes for terminated-by-signal processes: 128 + signal number. */
+const _EXIT_CODE_SIGTERM = 143; // 128 + 15
+const _EXIT_CODE_SIGINT = 130; // 128 + 2
+
+/** Guard so the "_process unavailable" warning is emitted at most once. */
+let _warnedProcessUnavailable = false;
+
+/**
+ * Why: The synchronous "exit" backstop can only SIGKILL a stuck subprocess when
+ * it holds the ChildProcess reference (transport._process). If a future SDK
+ * version renames or removes that private field, auto-kill silently degrades to
+ * relying on transport.close() alone — we surface that once so operators know.
+ * What: Emits a single stderr warning the first time _process is unavailable.
+ * Test: Mock a transport without _process, connect, and assert console.warn was
+ * called once with the expected message; connect a second client and assert it
+ * is not called again.
+ */
+function _warnProcessUnavailableOnce(): void {
+	if (_warnedProcessUnavailable) return;
+	_warnedProcessUnavailable = true;
+	console.warn(
+		"[axi-office/core] subprocess auto-kill unavailable: transport._process not accessible"
+	);
+}
+
+/**
+ * Why: When this client is embedded in a long-lived host process (a server,
+ * test runner, or another CLI that owns its own lifecycle), having the MCP
+ * client forcibly call process.exit() on SIGINT/SIGTERM would steal control of
+ * shutdown from the host. This toggle lets the host opt out of the auto-exit
+ * behavior while still benefiting from automatic child-process cleanup.
+ * What: Sets whether the SIGINT/SIGTERM handlers call process.exit() after
+ * tearing down live clients. Defaults to true (CLI behavior: the MCP tool is
+ * the process, so exiting with a POSIX signal code is correct). Set to false
+ * for library embedding where the host manages the process lifecycle — the
+ * handlers still kill child processes and clear the registry, but never exit.
+ * Test: Call setAutoExitOnSignal(false); emit "SIGINT" on a mocked process and
+ * assert process.exit was NOT called but child processes were killed and the
+ * registry was emptied.
+ */
+export function setAutoExitOnSignal(enabled: boolean): void {
+	autoExitOnSignal = enabled;
+}
+
 function _ensureSignalHandlers(): void {
 	if (_signalHandlersRegistered) return;
 	_signalHandlersRegistered = true;
 
-	// Graceful shutdown on SIGINT / SIGTERM: await close() then exit.
-	async function gracefulShutdown(signal: string): Promise<void> {
+	// Graceful shutdown on SIGINT / SIGTERM: await close() then (optionally) exit
+	// with the POSIX 128+signal code. When autoExitOnSignal is false (library
+	// embedding) we still tear down children but leave process lifecycle to the host.
+	async function gracefulShutdown(signal: "SIGINT" | "SIGTERM"): Promise<void> {
 		const closes = Array.from(_liveClients).map((c) => c.close());
 		await Promise.allSettled(closes);
-		process.exit(signal === "SIGTERM" ? 0 : 130);
+		if (!autoExitOnSignal) return;
+		process.exit(signal === "SIGTERM" ? _EXIT_CODE_SIGTERM : _EXIT_CODE_SIGINT);
 	}
 
 	process.on("SIGINT", () => void gracefulShutdown("SIGINT"));
@@ -104,6 +175,7 @@ export class McpStdioClient {
 			version: options.version ?? "1.0.0",
 			command: options.command,
 			args: options.args,
+			connectTimeoutMs: options.connectTimeoutMs ?? 30000,
 		};
 	}
 
@@ -130,14 +202,21 @@ export class McpStdioClient {
 	 * attempt rather than permanently awaiting a rejected promise.
 	 * Test: Call connect() twice concurrently; assert the Client constructor is only
 	 * called once. Also: make connect fail once, assert callTool() rejects, then make
-	 * it succeed and assert the next callTool() works (retry path).
+	 * it succeed and assert the next callTool() works (retry path). Also: with a
+	 * transport whose connect never resolves, connect({ connectTimeoutMs: 100 })
+	 * rejects with a CONNECT_TIMEOUT error and clears connectPromise so retry works.
+	 *
+	 * @param overrides Optional per-call overrides (e.g. connectTimeoutMs) that take
+	 * precedence over the constructor options for this connect attempt only.
 	 */
-	async connect(): Promise<void> {
+	async connect(overrides?: { connectTimeoutMs?: number }): Promise<void> {
 		if (this.client) return;
 		if (this.connectPromise) {
 			await this.connectPromise;
 			return;
 		}
+
+		const connectTimeoutMs = overrides?.connectTimeoutMs ?? this.opts.connectTimeoutMs;
 
 		this.connectPromise = (async () => {
 			try {
@@ -151,7 +230,29 @@ export class McpStdioClient {
 					{ capabilities: {} }
 				);
 
-				await client.connect(transport);
+				// Wrap the SDK connect with a timeout so a server that spawns but never
+				// completes the handshake cannot hang the caller indefinitely.
+				const doConnect = () => client.connect(transport);
+				if (connectTimeoutMs > 0) {
+					let timer: ReturnType<typeof setTimeout> | undefined;
+					const timeout = new Promise<never>((_, reject) => {
+						timer = setTimeout(() => {
+							reject(
+								new McpClientError(
+									`${this.opts.name}: MCP connect timed out after ${connectTimeoutMs}ms`,
+									"CONNECT_TIMEOUT"
+								)
+							);
+						}, connectTimeoutMs);
+					});
+					try {
+						await Promise.race([doConnect(), timeout]);
+					} finally {
+						if (timer) clearTimeout(timer);
+					}
+				} else {
+					await doConnect();
+				}
 
 				// Capture the child process reference for the synchronous exit backstop.
 				// StdioClientTransport stores the spawned process as ._process (private,
@@ -165,6 +266,10 @@ export class McpStdioClient {
 				)._process;
 				if (maybeChild) {
 					this._childProcess = maybeChild;
+				} else {
+					// Observability: without the child reference the synchronous exit
+					// backstop cannot SIGKILL a stuck subprocess. Warn once to stderr.
+					_warnProcessUnavailableOnce();
 				}
 
 				this.transport = transport;
@@ -221,11 +326,24 @@ export class McpStdioClient {
 	}
 
 	/**
-	 * Why: Prevents zombie subprocesses by explicitly closing the transport.
-	 * What: Calls client.close() and clears internal state. Safe to call multiple times.
-	 * Test: Call close() twice; assert client.close() is only called once.
+	 * Why: Prevents zombie subprocesses by explicitly closing the transport. If
+	 * close() is called while a connect is still in-flight, we must let that
+	 * connect settle first — otherwise we would return from close() with a child
+	 * that is still starting up (a zombie), because this.client is not yet set.
+	 * What: Awaits any in-flight connectPromise (swallowing its error), then calls
+	 * client.close() and clears internal state. Safe to call multiple times and
+	 * safe to call before connecting.
+	 * Test: Call close() twice; assert client.close() is only called once. Also:
+	 * start connect() with a transport that resolves slowly, immediately call
+	 * close(), and assert close() resolves only after the connect settles and the
+	 * child is torn down (client removed from the registry).
 	 */
 	async close(): Promise<void> {
+		// If a connect is in-flight, let it settle before tearing down so we never
+		// return from close() while the child process is still starting up.
+		if (this.connectPromise) {
+			await this.connectPromise.catch(() => {});
+		}
 		if (!this.client) return;
 		try {
 			await this.client.close();

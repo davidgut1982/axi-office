@@ -53,7 +53,12 @@ export {
 export type { ParsedArgs } from "./args.js";
 
 // MCP STDIO client
-export { McpStdioClient, McpClientError, callHttpTool } from "./mcp-client.js";
+export {
+	McpStdioClient,
+	McpClientError,
+	callHttpTool,
+	setAutoExitOnSignal,
+} from "./mcp-client.js";
 
 export type {
 	McpStdioClientOptions,
