@@ -78,3 +78,8 @@ await runAxiCli({
 		},
 	},
 });
+
+// Force exit so the MCP subprocess does not keep Node alive after the command
+// completes. The "exit" event fires synchronously, triggering _syncKillChild()
+// on every live McpStdioClient so the child is SIGKILL'd before Node exits.
+process.exit(process.exitCode ?? 0);

@@ -154,13 +154,15 @@ export class McpStdioClient {
 				await client.connect(transport);
 
 				// Capture the child process reference for the synchronous exit backstop.
-				// StdioClientTransport exposes the spawned process via .process (unofficial
-				// but stable in MCP SDK ≥ 1.x); guard defensively.
+				// StdioClientTransport stores the spawned process as ._process (private,
+				// unofficial but stable in MCP SDK ≥ 1.x); guard defensively.
+				// Note: the public .pid getter exists, but we need the full ChildProcess
+				// to call .kill() synchronously in the exit handler.
 				const maybeChild = (
 					transport as unknown as {
-						process?: import("node:child_process").ChildProcess;
+						_process?: import("node:child_process").ChildProcess;
 					}
-				).process;
+				)._process;
 				if (maybeChild) {
 					this._childProcess = maybeChild;
 				}
