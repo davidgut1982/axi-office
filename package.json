@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "name": "axi-office",
+  "description": "Public pnpm monorepo of AXI CLI tools for Office suite integrations",
+  "packageManager": "pnpm@11.6.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "node node_modules/@biomejs/biome/bin/biome check packages/",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@changesets/cli": "^2.31.0",
+    "typescript": "^5.7.0"
+  }
+}
