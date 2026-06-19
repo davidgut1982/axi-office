@@ -8,23 +8,32 @@ import { AxiError, parseFlags } from "@axi-office/core";
  * words > 0 and paragraphs >= 1.
  */
 import mammoth from "mammoth";
+import { resolveInBase } from "../paths.js";
 
 export async function infoCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
+	const { positionals, flags } = parseFlags(args);
 	const file = positionals[0];
 	if (!file) {
-		throw new AxiError("input.docx is required", "VALIDATION_ERROR", ["word-axi info <in.docx>"]);
+		throw new AxiError("input.docx is required", "VALIDATION_ERROR", [
+			"word-axi info <in.docx>",
+		]);
 	}
 
-	const { value: text } = await mammoth.extractRawText({ path: file });
+	const baseDir =
+		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const resolvedFile = resolveInBase(baseDir, file);
+
+	const { value: text } = await mammoth.extractRawText({ path: resolvedFile });
 	const lines = text.split(/\r?\n/).map((l) => l.trim());
 	const nonEmpty = lines.filter((l) => l.length > 0);
 	const words = text.split(/\s+/).filter((w) => w.length > 0).length;
 	// Heading heuristic: short, title-cased-ish lines with no terminal punctuation.
-	const headings = nonEmpty.filter((l) => l.length <= 80 && !/[.!?,;:]$/.test(l)).length;
+	const headings = nonEmpty.filter(
+		(l) => l.length <= 80 && !/[.!?,;:]$/.test(l),
+	).length;
 
 	return {
-		file,
+		file: resolvedFile,
 		words,
 		paragraphs: nonEmpty.length,
 		headings,

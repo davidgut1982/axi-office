@@ -15,7 +15,8 @@ export function getClient(): McpStdioClient {
 	if (!_client) {
 		_client = new McpStdioClient({
 			command: "npx",
-			args: ["-y", "@negokaz/excel-mcp-server"],
+			args: ["-y", "@negokaz/excel-mcp-server@0.12.0"],
+			// Pinned for supply-chain safety; audit upstream changelog before bumping.
 			name: "excel-mcp",
 		});
 	}

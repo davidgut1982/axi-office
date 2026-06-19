@@ -9,15 +9,22 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { AxiError, parseFlags } from "@axi-office/core";
 import { type IPatch, PatchType, TextRun, patchDocument } from "docx";
+import { resolveInBase } from "../paths.js";
 
 export async function patchCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const [file, dataJson] = positionals;
 	if (!file || !dataJson) {
-		throw new AxiError("input.docx and data-json are required", "VALIDATION_ERROR", [
-			"word-axi patch <in.docx> <data-json> [--out FILE]",
-		]);
+		throw new AxiError(
+			"input.docx and data-json are required",
+			"VALIDATION_ERROR",
+			["word-axi patch <in.docx> <data-json> [--out FILE]"],
+		);
 	}
+
+	const baseDir =
+		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const resolvedFile = resolveInBase(baseDir, file);
 
 	let data: unknown;
 	try {
@@ -39,9 +46,9 @@ export async function patchCommand(args: string[]): Promise<unknown> {
 
 	let input: Buffer;
 	try {
-		input = readFileSync(file);
+		input = readFileSync(resolvedFile);
 	} catch {
-		throw new AxiError(`cannot read docx file: ${file}`, "IO_ERROR");
+		throw new AxiError(`cannot read docx file: ${resolvedFile}`, "IO_ERROR");
 	}
 
 	const patched = await patchDocument({
@@ -50,8 +57,9 @@ export async function patchCommand(args: string[]): Promise<unknown> {
 		patches,
 	});
 
-	const out = typeof flags.out === "string" ? flags.out : file;
-	writeFileSync(out, patched);
+	const outRaw = typeof flags.out === "string" ? flags.out : file;
+	const resolvedOut = resolveInBase(baseDir, outRaw);
+	writeFileSync(resolvedOut, patched);
 
-	return { patched: out, keys: Object.keys(patches) };
+	return { patched: resolvedOut, keys: Object.keys(patches) };
 }

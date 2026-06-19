@@ -3,13 +3,21 @@
 AXI CLI for Excel — a thin, token-efficient wrapper around
 [negokaz/excel-mcp-server](https://www.npmjs.com/package/@negokaz/excel-mcp-server).
 
+## Disclaimer
+
+Unofficial project — not affiliated with or endorsed by Microsoft Corporation.
+This package wraps the following open-source MCP servers:
+- [negokaz/excel-mcp-server](https://www.npmjs.com/package/@negokaz/excel-mcp-server) (for Excel)
+
+All product names and trademarks are property of their respective owners.
+
 ## Install
 
 ```bash
 npm install -g @axi-office/excel
 ```
 
-The MCP server is fetched on demand via `npx`, so no separate install is needed.
+The CLI auto-fetches the pinned server (`@negokaz/excel-mcp-server@0.12.0`) via npx on first run (network required once). You may pre-install a pinned global to avoid auto-fetch: `npm install -g @negokaz/excel-mcp-server@0.12.0`
 
 ## Usage
 

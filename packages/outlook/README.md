@@ -4,13 +4,21 @@ AXI CLI for Outlook — a token-efficient wrapper around
 [softeria/ms-365-mcp-server](https://www.npmjs.com/package/@softeria/ms-365-mcp-server),
 scoped to the `outlook` preset (mail, calendar, contacts).
 
+## Disclaimer
+
+Unofficial project — not affiliated with or endorsed by Microsoft Corporation.
+This package wraps the following open-source MCP servers:
+- [softeria/ms-365-mcp-server](https://www.npmjs.com/package/@softeria/ms-365-mcp-server) (for Outlook)
+
+All product names and trademarks are property of their respective owners.
+
 ## Install
 
 ```bash
 npm install -g @axi-office/outlook
 ```
 
-The MCP server is fetched on demand via `npx`.
+The CLI auto-fetches the pinned server (`@softeria/ms-365-mcp-server@0.125.1`) via npx on first run (network required once). You may pre-install a pinned global to avoid auto-fetch: `npm install -g @softeria/ms-365-mcp-server@0.125.1`
 
 ## Authenticate
 
@@ -27,6 +35,42 @@ the MCP subprocess when set in your shell):
 | `MS365_MCP_CLIENT_ID` | Custom Entra app client id |
 | `MS365_MCP_TENANT_ID` | Tenant id |
 | `MS365_MCP_OAUTH_TOKEN` | Pre-issued OAuth token |
+
+## Custom Entra app registration
+
+To use your own Azure Entra (formerly Azure AD) app instead of the default:
+
+1. Create a **public client** app registration in the [Azure Portal](https://portal.azure.com) (Entra ID > App registrations > New registration).
+2. Under **Authentication**, enable **"Allow public client flows"** (required for device-code auth).
+3. Add the redirect URI: `https://login.microsoftonline.com/common/oauth2/nativeclient`
+4. Under **API permissions**, grant only the least-privilege delegated scopes your use case requires:
+   - `Mail.Read` — for reading mail
+   - `Mail.Send` — for sending mail
+   - `Calendars.Read` — for reading calendar events
+   - `Calendars.ReadWrite` — for creating/updating events
+   - `Contacts.Read` — for reading contacts
+5. If your tenant requires it, have an admin grant consent for the permissions.
+6. Set `MS365_MCP_CLIENT_ID` and `MS365_MCP_TENANT_ID` in your shell before running `outlook-axi`.
+
+## Token cache & revocation
+
+The ms-365-mcp-server caches OAuth tokens on disk (location is managed by the server).
+To revoke and clear the cached token, run:
+
+```bash
+npx -y @softeria/ms-365-mcp-server@0.125.1 --logout
+```
+
+You can also revoke access from the [Microsoft My Apps portal](https://myapps.microsoft.com) or via Entra admin consent management.
+
+## Bearer token security
+
+`MS365_MCP_OAUTH_TOKEN` is a bearer token with a typical lifetime of 60–90 minutes.
+**Treat it as a secret:**
+
+- Do not persist it in dotfiles (`.bashrc`, `.zshrc`, `.env` files checked into source control).
+- Do not commit it to any repository.
+- If it is accidentally exposed, revoke it immediately via the Microsoft portal and rotate your credentials.
 
 ## Usage
 

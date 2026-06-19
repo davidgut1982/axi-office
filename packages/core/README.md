@@ -2,6 +2,11 @@
 
 Shared plumbing for `@axi-office` CLI tools — TOON schema helpers, MCP STDIO client, flag parser, and session hook registration.
 
+## Disclaimer
+
+Unofficial project — not affiliated with or endorsed by Microsoft Corporation.
+All product names and trademarks are property of their respective owners.
+
 ## What is AXI?
 
 AXI (Agent eXperience Interface) is a CLI design pattern optimised for use by AI agents. Tools produce structured [TOON](https://github.com/toon-format/toon) output — token-efficient, parseable by LLMs, human-readable in the terminal.

@@ -16,7 +16,13 @@ export function getClient(): McpStdioClient {
 	if (!_client) {
 		_client = new McpStdioClient({
 			command: "npx",
-			args: ["-y", "@softeria/ms-365-mcp-server", "--preset", "outlook"],
+			args: [
+				"-y",
+				"@softeria/ms-365-mcp-server@0.125.1",
+				"--preset",
+				"outlook",
+			],
+			// Pinned for supply-chain safety; audit upstream changelog before bumping.
 			name: "ms-365-mcp",
 		});
 	}

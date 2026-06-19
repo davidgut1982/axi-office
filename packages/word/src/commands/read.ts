@@ -7,6 +7,7 @@ import { AxiError, parseFlags } from "@axi-office/core";
  * contains that text.
  */
 import mammoth from "mammoth";
+import { resolveInBase } from "../paths.js";
 
 export async function readCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
@@ -17,16 +18,20 @@ export async function readCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
+	const baseDir =
+		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const resolvedFile = resolveInBase(baseDir, file);
+
 	const format = typeof flags.format === "string" ? flags.format : "raw";
 	if (format !== "raw" && format !== "html") {
 		throw new AxiError("--format must be raw or html", "VALIDATION_ERROR");
 	}
 
 	if (format === "html") {
-		const result = await mammoth.convertToHtml({ path: file });
-		return { file, format, html: result.value };
+		const result = await mammoth.convertToHtml({ path: resolvedFile });
+		return { file: resolvedFile, format, html: result.value };
 	}
 
-	const result = await mammoth.extractRawText({ path: file });
-	return { file, format, text: result.value };
+	const result = await mammoth.extractRawText({ path: resolvedFile });
+	return { file: resolvedFile, format, text: result.value };
 }

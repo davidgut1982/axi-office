@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { AxiError, parseFlags } from "@axi-office/core";
 import { type DocSpec, buildDocxBuffer } from "../docx-build.js";
+import { resolveInBase } from "../paths.js";
 
 /**
  * Why: Specs may be passed inline or piped; "-" means read stdin so large specs avoid
@@ -23,13 +24,18 @@ function readSpec(arg: string): string {
 }
 
 export async function createCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
+	const { positionals, flags } = parseFlags(args);
 	const [out, specArg] = positionals;
 	if (!out || !specArg) {
-		throw new AxiError("out path and spec-json are required", "VALIDATION_ERROR", [
-			"word-axi create <out.docx> <spec-json|->",
-		]);
+		throw new AxiError(
+			"out path and spec-json are required",
+			"VALIDATION_ERROR",
+			["word-axi create <out.docx> <spec-json|->"],
+		);
 	}
+
+	const baseDir =
+		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 
 	let spec: DocSpec;
 	try {
@@ -41,8 +47,13 @@ export async function createCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("spec must have a sections array", "VALIDATION_ERROR");
 	}
 
+	const resolvedOut = resolveInBase(baseDir, out);
 	const buffer = await buildDocxBuffer(spec);
-	writeFileSync(out, buffer);
+	writeFileSync(resolvedOut, buffer);
 
-	return { created: out, bytes: buffer.length, sections: spec.sections.length };
+	return {
+		created: resolvedOut,
+		bytes: buffer.length,
+		sections: spec.sections.length,
+	};
 }
