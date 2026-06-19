@@ -92,12 +92,7 @@ export function pluck(key: string, subkey: string, as?: string): PluckDef {
 }
 
 /** Join an array of strings or objects (using subkey) into a comma-separated value. */
-export function joinArray(
-	key: string,
-	subkey: string,
-	as?: string,
-	empty = "none",
-): JoinArrayDef {
+export function joinArray(key: string, subkey: string, as?: string, empty = "none"): JoinArrayDef {
 	return { type: "joinArray", key, subkey, as: as ?? key, empty };
 }
 
@@ -116,7 +111,7 @@ export function mapEnum(
 	key: string,
 	map: Record<string, string>,
 	fallback: string,
-	as?: string,
+	as?: string
 ): MapEnumDef {
 	return { type: "mapEnum", key, map, fallback, as: as ?? key };
 }
@@ -127,10 +122,7 @@ export function lower(key: string, as?: string): LowerDef {
 }
 
 /** Apply a custom extractor function. */
-export function custom(
-	as: string,
-	fn: (item: Record<string, unknown>) => unknown,
-): CustomDef {
+export function custom(as: string, fn: (item: Record<string, unknown>) => unknown): CustomDef {
 	return { type: "custom", as, fn };
 }
 
@@ -147,7 +139,7 @@ export function custom(
  */
 export function extract(
 	item: Record<string, unknown>,
-	schema: SchemaDef[],
+	schema: SchemaDef[]
 ): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
@@ -160,10 +152,7 @@ export function extract(
 				break;
 
 			case "pluck": {
-				const pluckSrc = item[def.key] as
-					| Record<string, unknown>
-					| null
-					| undefined;
+				const pluckSrc = item[def.key] as Record<string, unknown> | null | undefined;
 				result[outputKey] = pluckSrc?.[def.subkey] ?? null;
 				break;
 			}
@@ -173,9 +162,7 @@ export function extract(
 				if (Array.isArray(arr) && arr.length > 0) {
 					result[outputKey] = arr
 						.map((x: unknown) =>
-							typeof x === "string"
-								? x
-								: (x as Record<string, unknown>)[def.subkey],
+							typeof x === "string" ? x : (x as Record<string, unknown>)[def.subkey]
 						)
 						.join(",");
 				} else {
@@ -204,8 +191,7 @@ export function extract(
 
 			case "lower": {
 				const lowerSrc = item[def.key];
-				result[outputKey] =
-					typeof lowerSrc === "string" ? lowerSrc.toLowerCase() : lowerSrc;
+				result[outputKey] = typeof lowerSrc === "string" ? lowerSrc.toLowerCase() : lowerSrc;
 				break;
 			}
 
@@ -215,9 +201,7 @@ export function extract(
 
 			default: {
 				const _exhaustive: never = def;
-				throw new Error(
-					`Unknown schema def type: ${JSON.stringify(_exhaustive)}`,
-				);
+				throw new Error(`Unknown schema def type: ${JSON.stringify(_exhaustive)}`);
 			}
 		}
 	}
@@ -237,7 +221,7 @@ export function extract(
 export function renderList(
 	label: string,
 	items: Record<string, unknown>[],
-	schema: SchemaDef[],
+	schema: SchemaDef[]
 ): string {
 	const extracted = items.map((item) => extract(item, schema));
 	return encode({ [label]: extracted });
@@ -251,7 +235,7 @@ export function renderList(
 export function renderDetail(
 	label: string,
 	item: Record<string, unknown>,
-	schema: SchemaDef[],
+	schema: SchemaDef[]
 ): string {
 	const extracted = extract(item, schema);
 	return encode({ [label]: extracted });

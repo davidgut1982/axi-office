@@ -6,12 +6,11 @@
     "useIgnoreFile": true
   },
   "files": {
-    "include": ["packages/**/*.ts", "packages/**/*.js"],
     "ignore": ["**/dist/**", "**/node_modules/**"]
   },
   "formatter": {
     "enabled": true,
-    "indentStyle": "space",
+    "indentStyle": "tab",
     "indentWidth": 2,
     "lineWidth": 100
   },
@@ -23,8 +22,7 @@
         "noExplicitAny": "off"
       },
       "style": {
-        "noNonNullAssertion": "warn",
-        "useLiteralKeys": "off"
+        "noNonNullAssertion": "warn"
       }
     }
   },

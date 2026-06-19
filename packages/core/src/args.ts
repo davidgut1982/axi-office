@@ -23,10 +23,7 @@ export interface ParsedArgs {
  * Test: parseFlags(["--out", "file.txt", "--dry-run"], ["dry-run"]) →
  * { positionals: [], flags: { out: "file.txt", "dry-run": true } }.
  */
-export function parseFlags(
-	args: string[],
-	booleans: string[] = [],
-): ParsedArgs {
+export function parseFlags(args: string[], booleans: string[] = []): ParsedArgs {
 	const positionals: string[] = [];
 	const flags: Record<string, string | true> = {};
 
@@ -38,6 +35,15 @@ export function parseFlags(
 		}
 
 		const body = token.slice(2);
+
+		// "--" is the end-of-flags sentinel: everything after it is a positional.
+		if (body === "") {
+			for (let j = i + 1; j < args.length; j++) {
+				positionals.push(args[j]);
+			}
+			break;
+		}
+
 		const eq = body.indexOf("=");
 		if (eq !== -1) {
 			flags[body.slice(0, eq)] = body.slice(eq + 1);
@@ -45,11 +51,7 @@ export function parseFlags(
 		}
 
 		const next = args[i + 1];
-		if (
-			next !== undefined &&
-			!next.startsWith("--") &&
-			!booleans.includes(body)
-		) {
+		if (next !== undefined && !next.startsWith("--") && !booleans.includes(body)) {
 			flags[body] = next;
 			i++;
 		} else {
@@ -67,11 +69,7 @@ export function parseFlags(
  * Test: parseLimit("5", 10, 100) → 5; parseLimit("999", 10, 100) → 100;
  * parseLimit(undefined, 10, 100) → 10.
  */
-export function parseLimit(
-	value: unknown,
-	fallback: number,
-	max: number,
-): number {
+export function parseLimit(value: unknown, fallback: number, max: number): number {
 	if (typeof value !== "string") return fallback;
 	const parsed = Number.parseInt(value, 10);
 	if (!Number.isFinite(parsed) || parsed < 1) return fallback;

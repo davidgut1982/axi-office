@@ -144,6 +144,32 @@ describe("McpStdioClient", () => {
 		await expect(client.close()).resolves.toBeUndefined();
 		expect(mockClose).not.toHaveBeenCalled();
 	});
+
+	it("clears connectPromise on connect failure so a subsequent call retries", async () => {
+		// First connect attempt fails.
+		const connectError = new Error("spawn ENOENT");
+		mockConnect.mockRejectedValueOnce(connectError);
+
+		const client = new McpStdioClient({
+			command: "npx",
+			args: ["mcp"],
+			name: "retry-test",
+		});
+
+		// First callTool() should reject with the connect error.
+		await expect(client.callTool("ping", {})).rejects.toThrow("spawn ENOENT");
+
+		// Subsequent connect must succeed; verify connectPromise was cleared.
+		mockConnect.mockResolvedValue(undefined);
+		mockCallTool.mockResolvedValue({
+			content: [{ type: "text", text: '{"ok":true}' }],
+		});
+
+		const result = await client.callTool("ping", {});
+		expect(result).toEqual({ ok: true });
+		// connect() must have been called twice (once for the failed attempt, once for retry).
+		expect(mockConnect).toHaveBeenCalledTimes(2);
+	});
 });
 
 // ---------------------------------------------------------------------------

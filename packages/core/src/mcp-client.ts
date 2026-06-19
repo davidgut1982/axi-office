@@ -57,11 +57,46 @@ export interface McpStdioClientOptions {
  * callTool("list_sheets", {}); assert transport constructor was called with the
  * correct command/args and client.callTool was invoked with the right params.
  */
+// ---------------------------------------------------------------------------
+// Module-level process-exit registry — ensures we register signal handlers
+// exactly once across all McpStdioClient instances.
+// ---------------------------------------------------------------------------
+
+/** All live client instances, used by the module-level signal handlers. */
+const _liveClients = new Set<McpStdioClient>();
+let _signalHandlersRegistered = false;
+
+function _ensureSignalHandlers(): void {
+	if (_signalHandlersRegistered) return;
+	_signalHandlersRegistered = true;
+
+	// Graceful shutdown on SIGINT / SIGTERM: await close() then exit.
+	async function gracefulShutdown(signal: string): Promise<void> {
+		const closes = Array.from(_liveClients).map((c) => c.close());
+		await Promise.allSettled(closes);
+		process.exit(signal === "SIGTERM" ? 0 : 130);
+	}
+
+	process.on("SIGINT", () => void gracefulShutdown("SIGINT"));
+	process.on("SIGTERM", () => void gracefulShutdown("SIGTERM"));
+
+	// Synchronous backstop: if the process exits for any reason (unhandled
+	// exception, process.exit() called elsewhere, etc.) synchronously kill
+	// every child that is still alive. async close() is not possible here.
+	process.on("exit", () => {
+		for (const client of _liveClients) {
+			client._syncKillChild();
+		}
+	});
+}
+
 export class McpStdioClient {
 	private readonly opts: Required<McpStdioClientOptions>;
 	private client: Client | undefined;
 	private transport: StdioClientTransport | undefined;
 	private connectPromise: Promise<void> | undefined;
+	/** Reference kept so the "exit" handler can synchronously kill the child. */
+	private _childProcess: import("node:child_process").ChildProcess | undefined;
 
 	constructor(options: McpStdioClientOptions) {
 		this.opts = {
@@ -73,12 +108,29 @@ export class McpStdioClient {
 	}
 
 	/**
+	 * Why: Called synchronously from the process "exit" handler as a best-effort
+	 * backstop to kill the spawned child when async close() cannot be awaited.
+	 * What: Sends SIGKILL to the child process if it is still alive.
+	 * Test: Not tested directly — covered by the lifecycle integration tests.
+	 */
+	_syncKillChild(): void {
+		try {
+			this._childProcess?.kill("SIGKILL");
+		} catch {
+			// Ignore errors during forced kill.
+		}
+	}
+
+	/**
 	 * Why: Ensures a single connection is established even when multiple callTool()
 	 * calls race during startup.
 	 * What: Lazily initializes the StdioClientTransport and Client, then calls
 	 * client.connect(). Stores the in-flight promise to prevent duplicate connections.
+	 * If connect fails, clears connectPromise so the next call retries with a fresh
+	 * attempt rather than permanently awaiting a rejected promise.
 	 * Test: Call connect() twice concurrently; assert the Client constructor is only
-	 * called once.
+	 * called once. Also: make connect fail once, assert callTool() rejects, then make
+	 * it succeed and assert the next callTool() works (retry path).
 	 */
 	async connect(): Promise<void> {
 		if (this.client) return;
@@ -88,23 +140,43 @@ export class McpStdioClient {
 		}
 
 		this.connectPromise = (async () => {
-			const transport = new StdioClientTransport({
-				command: this.opts.command,
-				args: this.opts.args,
-			});
+			try {
+				const transport = new StdioClientTransport({
+					command: this.opts.command,
+					args: this.opts.args,
+				});
 
-			const client = new Client(
-				{ name: this.opts.name, version: this.opts.version },
-				{ capabilities: {} },
-			);
+				const client = new Client(
+					{ name: this.opts.name, version: this.opts.version },
+					{ capabilities: {} }
+				);
 
-			await client.connect(transport);
+				await client.connect(transport);
 
-			this.transport = transport;
-			this.client = client;
+				// Capture the child process reference for the synchronous exit backstop.
+				// StdioClientTransport exposes the spawned process via .process (unofficial
+				// but stable in MCP SDK ≥ 1.x); guard defensively.
+				const maybeChild = (
+					transport as unknown as {
+						process?: import("node:child_process").ChildProcess;
+					}
+				).process;
+				if (maybeChild) {
+					this._childProcess = maybeChild;
+				}
 
-			// Ensure the subprocess is torn down when Node exits.
-			process.once("exit", () => void this.close());
+				this.transport = transport;
+				this.client = client;
+
+				// Register this client for module-level signal/exit handling.
+				_liveClients.add(this);
+				_ensureSignalHandlers();
+			} catch (err) {
+				// Clear the promise so a subsequent connect() call can retry rather
+				// than permanently awaiting this rejected promise.
+				this.connectPromise = undefined;
+				throw err;
+			}
 		})();
 
 		await this.connectPromise;
@@ -119,17 +191,11 @@ export class McpStdioClient {
 	 * Test: Mock client.callTool to return { content: [{ type: "text", text: '{"a":1}' }] };
 	 * assert callTool returns { a: 1 }.
 	 */
-	async callTool(
-		name: string,
-		args: Record<string, unknown> = {},
-	): Promise<unknown> {
+	async callTool(name: string, args: Record<string, unknown> = {}): Promise<unknown> {
 		await this.connect();
 
 		if (!this.client) {
-			throw new McpClientError(
-				`${this.opts.name}: client is not connected`,
-				"NOT_CONNECTED",
-			);
+			throw new McpClientError(`${this.opts.name}: client is not connected`, "NOT_CONNECTED");
 		}
 
 		const raw = (await this.client.callTool({
@@ -167,6 +233,8 @@ export class McpStdioClient {
 		this.client = undefined;
 		this.transport = undefined;
 		this.connectPromise = undefined;
+		this._childProcess = undefined;
+		_liveClients.delete(this);
 	}
 }
 
@@ -201,7 +269,7 @@ export class McpClientError extends Error {
 export async function callHttpTool(
 	url: string,
 	name: string,
-	args: Record<string, unknown> = {},
+	args: Record<string, unknown> = {}
 ): Promise<unknown> {
 	const body = JSON.stringify({
 		jsonrpc: "2.0",
@@ -220,14 +288,14 @@ export async function callHttpTool(
 	} catch (err) {
 		throw new McpClientError(
 			`Failed to connect to MCP server at ${url}: ${String(err)}`,
-			"CONNECTION_ERROR",
+			"CONNECTION_ERROR"
 		);
 	}
 
 	if (!response.ok) {
 		throw new McpClientError(
 			`MCP server returned ${response.status} ${response.statusText}`,
-			"HTTP_ERROR",
+			"HTTP_ERROR"
 		);
 	}
 
@@ -235,10 +303,7 @@ export async function callHttpTool(
 	try {
 		data = await response.json();
 	} catch {
-		throw new McpClientError(
-			"MCP server returned non-JSON response",
-			"PARSE_ERROR",
-		);
+		throw new McpClientError("MCP server returned non-JSON response", "PARSE_ERROR");
 	}
 
 	const rpc = data as {
@@ -249,7 +314,7 @@ export async function callHttpTool(
 	if (rpc.error) {
 		throw new McpClientError(
 			`MCP error: ${rpc.error.message} (code ${rpc.error.code})`,
-			"MCP_ERROR",
+			"MCP_ERROR"
 		);
 	}
 
