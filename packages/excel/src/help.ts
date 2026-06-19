@@ -25,10 +25,13 @@ export const COMMAND_HELP: Record<string, string> = {
 	sheets: `excel-axi sheets <file>
 
 Describe all sheets in the workbook at <file>.`,
-	read: `excel-axi read <file> <sheet> [range] [--limit N]
+	read: `excel-axi read <file> <sheet> [range] [--formula] [--style]
 
 Read cell values from <sheet>. Optional A1 <range> (e.g. A1:C10).
---limit N   cap the number of returned rows`,
+--formula   show cell formulas instead of computed values
+--style     include style information for each cell
+
+Tip: set EXCEL_MCP_PAGING_CELLS_LIMIT=N on the server to control page size (default 2000).`,
 	write: `excel-axi write <file> <sheet> <range> <values-json>
 
 Write a 2D array of values to <range>.
@@ -39,7 +42,13 @@ Create a table over <range>. Optional table [name].`,
 	"copy-sheet": `excel-axi copy-sheet <file> <src> <dst>
 
 Copy sheet <src> to a new sheet named <dst>.`,
-	"format-range": `excel-axi format-range <file> <sheet> <range> <format-json>
+	"format-range": `excel-axi format-range <file> <sheet> <range> <styles-json>
 
-Apply formatting to <range>. <format-json> is a JSON object of style props.`,
+Apply formatting to <range>. <styles-json> is a 2D JSON array of per-cell style objects
+whose dimensions must exactly match the range grid (rows × cols).
+
+Each element is either a style object or null (no change for that cell).
+
+Example — A1:B2 (2 rows × 2 cols):
+  excel-axi format-range book.xlsx Sheet1 A1:B2 '[[{"font":{"bold":true}},null],[null,null]]'`,
 };

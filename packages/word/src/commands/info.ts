@@ -36,6 +36,8 @@ export async function infoCommand(args: string[]): Promise<unknown> {
 		file: resolvedFile,
 		words,
 		paragraphs: nonEmpty.length,
-		headings,
+		// headings_estimated: heuristic count of short, title-like lines without terminal
+		// punctuation. May over- or under-count; use word-axi read for precise structure.
+		headings_estimated: headings,
 	};
 }

@@ -39,9 +39,15 @@ Extract document content. --format raw (default) returns plain text;
 --format html returns HTML produced by mammoth.`,
 	info: `word-axi info <in.docx>
 
-Report counts: words, paragraphs, and headings (best-effort from raw text).`,
+Report counts: words, paragraphs, and headings_estimated (heuristic — may over/under-count;
+use word-axi read for precise document structure).`,
 	patch: `word-axi patch <in.docx> <data-json> [--out FILE]
 
 Replace {{key}} placeholders with values from <data-json>.
-Without --out the input file is overwritten in place.`,
+Without --out the input file is overwritten in place.
+
+IMPORTANT: each {{key}} placeholder must be the sole content of its paragraph.
+PatchType.PARAGRAPH replaces the entire paragraph containing the placeholder, so any
+surrounding text in the same paragraph will be lost. Place static text in separate
+paragraphs from the placeholder.`,
 };

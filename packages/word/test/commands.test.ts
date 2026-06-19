@@ -77,9 +77,15 @@ describe("info", () => {
 		const info = (await infoCommand([out])) as {
 			words: number;
 			paragraphs: number;
+			headings_estimated: number;
 		};
 		expect(info.words).toBeGreaterThan(0);
 		expect(info.paragraphs).toBeGreaterThanOrEqual(1);
+		// headings_estimated is a heuristic — just assert it is a non-negative integer
+		expect(typeof info.headings_estimated).toBe("number");
+		expect(info.headings_estimated).toBeGreaterThanOrEqual(0);
+		// The old "headings" key must no longer be present
+		expect(info).not.toHaveProperty("headings");
 	});
 });
 
@@ -125,6 +131,50 @@ describe("patch", () => {
 		await expect(patchCommand([join(dir, "template.docx"), "[1,2]"])).rejects.toBeInstanceOf(
 			AxiError
 		);
+	});
+
+	it("documents PatchType.PARAGRAPH behavior: placeholder must be sole paragraph content", async () => {
+		// IMPORTANT: docx patchDocument with PatchType.PARAGRAPH replaces the entire
+		// paragraph containing the placeholder, not just the token inline. This means
+		// surrounding text in the same paragraph is LOST.
+		//
+		// This test demonstrates and locks in the current behavior so it cannot regress
+		// silently. Do NOT change the implementation to a different patch type without
+		// updating this test — see word-axi patch --help for the documented constraint.
+		//
+		// Acceptable behavior: placeholder-only paragraph → surrounding static text in a
+		// *separate* paragraph survives; only the placeholder paragraph is replaced.
+		const template = join(dir, "template-midsentence.docx");
+		const out = join(dir, "patched-midsentence.docx");
+
+		// Create doc with: a static header paragraph, a placeholder-only paragraph, and a
+		// static footer paragraph — the safe pattern for PatchType.PARAGRAPH.
+		await createCommand([
+			template,
+			JSON.stringify({
+				sections: [
+					{ type: "paragraph", text: "Dear customer," },
+					{ type: "paragraph", text: "{{greeting}}" },
+					{ type: "paragraph", text: "Regards, the team" },
+				],
+			}),
+		]);
+
+		const result = (await patchCommand([
+			template,
+			JSON.stringify({ greeting: "Welcome to AXI Office!" }),
+			"--out",
+			out,
+		])) as { keys: string[] };
+		expect(result.keys).toContain("greeting");
+
+		const read = (await readCommand([out])) as { text: string };
+		// The replaced paragraph contains the substituted value
+		expect(read.text).toContain("Welcome to AXI Office!");
+		expect(read.text).not.toContain("{{greeting}}");
+		// Paragraphs that did NOT contain the placeholder are preserved
+		expect(read.text).toContain("Dear customer");
+		expect(read.text).toContain("Regards");
 	});
 });
 

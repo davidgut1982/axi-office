@@ -81,12 +81,32 @@ describe("outlook calendar commands", () => {
 		expect(mockCallTool).toHaveBeenCalledWith("list-calendar-events", {});
 	});
 
-	it("cal-view calls get-calendar-view with range", async () => {
+	it("cal-view calls get-calendar-view with full ISO datetimes", async () => {
 		await calViewCommand(["2026-01-01T00:00:00Z", "2026-01-31T00:00:00Z"]);
 		expect(mockCallTool).toHaveBeenCalledWith("get-calendar-view", {
 			startDateTime: "2026-01-01T00:00:00Z",
 			endDateTime: "2026-01-31T00:00:00Z",
 		});
+	});
+
+	it("cal-view expands bare start date to T00:00:00Z and bare end date to T23:59:59Z", async () => {
+		await calViewCommand(["2026-01-01", "2026-01-31"]);
+		expect(mockCallTool).toHaveBeenCalledWith("get-calendar-view", {
+			startDateTime: "2026-01-01T00:00:00Z",
+			endDateTime: "2026-01-31T23:59:59Z",
+		});
+	});
+
+	it("cal-view passes through mixed bare date + full datetime", async () => {
+		await calViewCommand(["2026-03-01", "2026-03-31T23:59:59Z"]);
+		expect(mockCallTool).toHaveBeenCalledWith("get-calendar-view", {
+			startDateTime: "2026-03-01T00:00:00Z",
+			endDateTime: "2026-03-31T23:59:59Z",
+		});
+	});
+
+	it("cal-view rejects invalid date strings", async () => {
+		await expect(calViewCommand(["not-a-date", "2026-01-31"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("cal-view requires start and end", async () => {

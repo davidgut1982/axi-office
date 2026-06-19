@@ -47,13 +47,29 @@ describe("excel commands", () => {
 		});
 	});
 
-	it("read applies --limit as knownPagingRanges", async () => {
-		await readCommand(["/tmp/x.xlsx", "Sheet1", "--limit", "5"]);
+	it("read passes --formula as showFormula boolean", async () => {
+		await readCommand(["/tmp/x.xlsx", "Sheet1", "--formula"]);
 		expect(mockCallTool).toHaveBeenCalledWith("excel_read_sheet", {
 			fileAbsolutePath: "/tmp/x.xlsx",
 			sheetName: "Sheet1",
-			knownPagingRanges: 5,
+			showFormula: true,
 		});
+	});
+
+	it("read passes --style as showStyle boolean", async () => {
+		await readCommand(["/tmp/x.xlsx", "Sheet1", "B2:D4", "--style"]);
+		expect(mockCallTool).toHaveBeenCalledWith("excel_read_sheet", {
+			fileAbsolutePath: "/tmp/x.xlsx",
+			sheetName: "Sheet1",
+			range: "B2:D4",
+			showStyle: true,
+		});
+	});
+
+	it("read does NOT pass knownPagingRanges", async () => {
+		await readCommand(["/tmp/x.xlsx", "Sheet1"]);
+		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(call).not.toHaveProperty("knownPagingRanges");
 	});
 
 	it("read requires file and sheet", async () => {
@@ -95,19 +111,52 @@ describe("excel commands", () => {
 		});
 	});
 
-	it("format-range merges parsed format json", async () => {
-		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", '{"bold":true}']);
+	it("format-range sends 2D styles array matching the range grid", async () => {
+		// A1:B2 → 2 rows × 2 cols → 2D array [[row0col0, row0col1],[row1col0, row1col1]]
+		const styles = [[{ font: { bold: true } }, null], [null, null]];
+		await formatRangeCommand([
+			"/tmp/x.xlsx",
+			"Sheet1",
+			"A1:B2",
+			JSON.stringify(styles),
+		]);
 		expect(mockCallTool).toHaveBeenCalledWith("excel_format_range", {
 			fileAbsolutePath: "/tmp/x.xlsx",
 			sheetName: "Sheet1",
 			range: "A1:B2",
-			bold: true,
+			styles,
 		});
 	});
 
-	it("format-range rejects non-object json", async () => {
+	it("format-range rejects non-array styles json", async () => {
+		// A flat object is not the 2D array the tool requires
 		await expect(
-			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", "[1,2]"])
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", '{"bold":true}'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("format-range rejects styles with wrong row count", async () => {
+		// A1:B2 needs 2 rows but we supply 1
+		await expect(
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", "[[null,null]]"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("format-range rejects styles with wrong column count", async () => {
+		// A1:B2 needs 2 cols per row but we supply 3
+		await expect(
+			formatRangeCommand([
+				"/tmp/x.xlsx",
+				"Sheet1",
+				"A1:B2",
+				"[[null,null,null],[null,null,null]]",
+			])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("format-range rejects invalid range notation", async () => {
+		await expect(
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "invalid", "[[null]]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 });

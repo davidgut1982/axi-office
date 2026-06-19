@@ -22,7 +22,9 @@ import { homeCommand } from "../home.js";
 function readVersion(): string {
 	try {
 		const here = dirname(fileURLToPath(import.meta.url));
-		const pkg = JSON.parse(readFileSync(join(here, "../../package.json"), "utf8"));
+		const pkg = JSON.parse(
+			readFileSync(join(here, "../../package.json"), "utf8"),
+		);
 		return typeof pkg.version === "string" ? pkg.version : "0.0.0";
 	} catch {
 		return "0.0.0";
@@ -36,7 +38,7 @@ function readVersion(): string {
  * Test: render(async () => ({ a: 1 }))([]) resolves to { a: 1 }.
  */
 function render(
-	handler: (args: string[]) => Promise<unknown>
+	handler: (args: string[]) => Promise<unknown>,
 ): (args: string[]) => Promise<string | Record<string, unknown>> {
 	return async (args: string[]) => {
 		const out = await handler(args);
@@ -70,3 +72,7 @@ await runAxiCli({
 		},
 	},
 });
+
+// Prevent process hang from open handles (e.g. MCP stdio transport) after the CLI
+// has finished rendering its output. exitCode is set by runAxiCli on error paths.
+process.exit(process.exitCode ?? 0);
