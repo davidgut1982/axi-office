@@ -18,8 +18,7 @@ export async function readCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	const baseDir =
-		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const baseDir = typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 	const resolvedFile = resolveInBase(baseDir, file);
 
 	const format = typeof flags.format === "string" ? flags.format : "raw";

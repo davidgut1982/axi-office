@@ -15,15 +15,12 @@ export async function patchCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const [file, dataJson] = positionals;
 	if (!file || !dataJson) {
-		throw new AxiError(
-			"input.docx and data-json are required",
-			"VALIDATION_ERROR",
-			["word-axi patch <in.docx> <data-json> [--out FILE]"],
-		);
+		throw new AxiError("input.docx and data-json are required", "VALIDATION_ERROR", [
+			"word-axi patch <in.docx> <data-json> [--out FILE]",
+		]);
 	}
 
-	const baseDir =
-		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const baseDir = typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 	const resolvedFile = resolveInBase(baseDir, file);
 
 	let data: unknown;

@@ -19,14 +19,12 @@ import { getClient } from "../client.js";
  */
 function parseRangeDimensions(range: string): { rows: number; cols: number } {
 	// Match A1:B2 or $A$1:$B$2 style references
-	const match = /^\$?([A-Za-z]+)\$?(\d+):\$?([A-Za-z]+)\$?(\d+)$/.exec(
-		range.trim(),
-	);
+	const match = /^\$?([A-Za-z]+)\$?(\d+):\$?([A-Za-z]+)\$?(\d+)$/.exec(range.trim());
 	if (!match) {
 		throw new AxiError(
 			`range "${range}" is not a valid A1:Z99 range reference`,
 			"VALIDATION_ERROR",
-			['Example range: "A1:C2" for 2 rows × 3 cols'],
+			['Example range: "A1:C2" for 2 rows × 3 cols']
 		);
 	}
 	const colStart = match[1] ?? "";
@@ -51,17 +49,13 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
 	const [file, sheet, range, stylesJson] = positionals;
 	if (!file || !sheet || !range || !stylesJson) {
-		throw new AxiError(
-			"file, sheet, range and styles-json are required",
-			"VALIDATION_ERROR",
-			[
-				"excel-axi format-range <file> <sheet> <range> <styles-json>",
-				"<styles-json> is a 2D JSON array of per-cell style objects matching the range grid.",
-				"Example (A1:B2, 2 rows × 2 cols):",
-				'  [[{"font":{"bold":true}},{"font":{"italic":true}}],[null,null]]',
-				"Use null for cells whose style should not change.",
-			],
-		);
+		throw new AxiError("file, sheet, range and styles-json are required", "VALIDATION_ERROR", [
+			"excel-axi format-range <file> <sheet> <range> <styles-json>",
+			"<styles-json> is a 2D JSON array of per-cell style objects matching the range grid.",
+			"Example (A1:B2, 2 rows × 2 cols):",
+			'  [[{"font":{"bold":true}},{"font":{"italic":true}}],[null,null]]',
+			"Use null for cells whose style should not change.",
+		]);
 	}
 
 	let styles: unknown;
@@ -80,7 +74,7 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 				"Each element of the outer array is a row; each element of a row is either a",
 				"style object or null.",
 				'Example for A1:B2: [[{"font":{"bold":true}},null],[null,null]]',
-			],
+			]
 		);
 	}
 
@@ -93,19 +87,15 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 			[
 				`styles-json must be a ${rows}×${cols} 2D array to match range "${range}".`,
 				`Outer array length must be ${rows} (one entry per row).`,
-			],
+			]
 		);
 	}
 	for (let r = 0; r < styles.length; r++) {
 		const row = styles[r];
 		if (!Array.isArray(row)) {
-			throw new AxiError(
-				`styles-json row ${r} is not an array`,
-				"VALIDATION_ERROR",
-				[
-					`Each row in styles-json must be an array of ${cols} cell style object(s) or null.`,
-				],
-			);
+			throw new AxiError(`styles-json row ${r} is not an array`, "VALIDATION_ERROR", [
+				`Each row in styles-json must be an array of ${cols} cell style object(s) or null.`,
+			]);
 		}
 		if (row.length !== cols) {
 			throw new AxiError(
@@ -114,7 +104,7 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 				[
 					`styles-json must be a ${rows}×${cols} 2D array to match range "${range}".`,
 					`Each row must have exactly ${cols} element(s).`,
-				],
+				]
 			);
 		}
 	}

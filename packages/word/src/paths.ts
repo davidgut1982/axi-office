@@ -18,19 +18,15 @@ import { AxiError } from "@axi-office/core";
  *
  * @internal
  */
-export function resolveInBase(
-	baseDir: string | undefined,
-	filePath: string,
-): string {
+export function resolveInBase(baseDir: string | undefined, filePath: string): string {
 	const resolved = resolve(filePath);
 	if (baseDir === undefined) return resolved;
 	const base = resolve(baseDir);
 	if (!resolved.startsWith(`${base}/`) && resolved !== base) {
-		throw new AxiError(
-			`path "${filePath}" escapes base dir "${base}"`,
-			"SECURITY_ERROR",
-			[`Resolved path: ${resolved}`, `Base dir:      ${base}`],
-		);
+		throw new AxiError(`path "${filePath}" escapes base dir "${base}"`, "SECURITY_ERROR", [
+			`Resolved path: ${resolved}`,
+			`Base dir:      ${base}`,
+		]);
 	}
 	return resolved;
 }

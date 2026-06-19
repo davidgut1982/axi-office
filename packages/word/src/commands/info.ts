@@ -14,13 +14,10 @@ export async function infoCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const file = positionals[0];
 	if (!file) {
-		throw new AxiError("input.docx is required", "VALIDATION_ERROR", [
-			"word-axi info <in.docx>",
-		]);
+		throw new AxiError("input.docx is required", "VALIDATION_ERROR", ["word-axi info <in.docx>"]);
 	}
 
-	const baseDir =
-		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const baseDir = typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 	const resolvedFile = resolveInBase(baseDir, file);
 
 	const { value: text } = await mammoth.extractRawText({ path: resolvedFile });
@@ -28,9 +25,7 @@ export async function infoCommand(args: string[]): Promise<unknown> {
 	const nonEmpty = lines.filter((l) => l.length > 0);
 	const words = text.split(/\s+/).filter((w) => w.length > 0).length;
 	// Heading heuristic: short, title-cased-ish lines with no terminal punctuation.
-	const headings = nonEmpty.filter(
-		(l) => l.length <= 80 && !/[.!?,;:]$/.test(l),
-	).length;
+	const headings = nonEmpty.filter((l) => l.length <= 80 && !/[.!?,;:]$/.test(l)).length;
 
 	return {
 		file: resolvedFile,

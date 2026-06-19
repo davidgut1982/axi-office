@@ -16,15 +16,12 @@ export async function fromMarkdownCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const [input, out] = positionals;
 	if (!input || !out) {
-		throw new AxiError(
-			"input.md and out.docx are required",
-			"VALIDATION_ERROR",
-			["word-axi from-markdown <in.md> <out.docx>"],
-		);
+		throw new AxiError("input.md and out.docx are required", "VALIDATION_ERROR", [
+			"word-axi from-markdown <in.md> <out.docx>",
+		]);
 	}
 
-	const baseDir =
-		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const baseDir = typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 	const resolvedInput = resolveInBase(baseDir, input);
 	const resolvedOut = resolveInBase(baseDir, out);
 
@@ -32,10 +29,7 @@ export async function fromMarkdownCommand(args: string[]): Promise<unknown> {
 	try {
 		md = readFileSync(resolvedInput, "utf8");
 	} catch {
-		throw new AxiError(
-			`cannot read markdown file: ${resolvedInput}`,
-			"IO_ERROR",
-		);
+		throw new AxiError(`cannot read markdown file: ${resolvedInput}`, "IO_ERROR");
 	}
 
 	const spec = parseMarkdown(md);

@@ -111,7 +111,7 @@ function _warnProcessUnavailableOnce(): void {
 	if (_warnedProcessUnavailable) return;
 	_warnedProcessUnavailable = true;
 	console.warn(
-		"[axi-office/core] subprocess auto-kill unavailable: transport._process not accessible",
+		"[axi-office/core] subprocess auto-kill unavailable: transport._process not accessible"
 	);
 }
 
@@ -216,8 +216,7 @@ export class McpStdioClient {
 			return;
 		}
 
-		const connectTimeoutMs =
-			overrides?.connectTimeoutMs ?? this.opts.connectTimeoutMs;
+		const connectTimeoutMs = overrides?.connectTimeoutMs ?? this.opts.connectTimeoutMs;
 
 		this.connectPromise = (async () => {
 			try {
@@ -228,7 +227,7 @@ export class McpStdioClient {
 
 				const client = new Client(
 					{ name: this.opts.name, version: this.opts.version },
-					{ capabilities: {} },
+					{ capabilities: {} }
 				);
 
 				// Wrap the SDK connect with a timeout so a server that spawns but never
@@ -241,8 +240,8 @@ export class McpStdioClient {
 							reject(
 								new McpClientError(
 									`${this.opts.name}: MCP connect timed out after ${connectTimeoutMs}ms`,
-									"CONNECT_TIMEOUT",
-								),
+									"CONNECT_TIMEOUT"
+								)
 							);
 						}, connectTimeoutMs);
 					});
@@ -299,17 +298,11 @@ export class McpStdioClient {
 	 * Test: Mock client.callTool to return { content: [{ type: "text", text: '{"a":1}' }] };
 	 * assert callTool returns { a: 1 }.
 	 */
-	async callTool(
-		name: string,
-		args: Record<string, unknown> = {},
-	): Promise<unknown> {
+	async callTool(name: string, args: Record<string, unknown> = {}): Promise<unknown> {
 		await this.connect();
 
 		if (!this.client) {
-			throw new McpClientError(
-				`${this.opts.name}: client is not connected`,
-				"NOT_CONNECTED",
-			);
+			throw new McpClientError(`${this.opts.name}: client is not connected`, "NOT_CONNECTED");
 		}
 
 		const raw = (await this.client.callTool({
@@ -400,7 +393,7 @@ export class McpClientError extends Error {
 export async function callHttpTool(
 	url: string,
 	name: string,
-	args: Record<string, unknown> = {},
+	args: Record<string, unknown> = {}
 ): Promise<unknown> {
 	const body = JSON.stringify({
 		jsonrpc: "2.0",
@@ -419,14 +412,14 @@ export async function callHttpTool(
 	} catch (err) {
 		throw new McpClientError(
 			`Failed to connect to MCP server at ${url}: ${String(err)}`,
-			"CONNECTION_ERROR",
+			"CONNECTION_ERROR"
 		);
 	}
 
 	if (!response.ok) {
 		throw new McpClientError(
 			`MCP server returned ${response.status} ${response.statusText}`,
-			"HTTP_ERROR",
+			"HTTP_ERROR"
 		);
 	}
 
@@ -434,10 +427,7 @@ export async function callHttpTool(
 	try {
 		data = await response.json();
 	} catch {
-		throw new McpClientError(
-			"MCP server returned non-JSON response",
-			"PARSE_ERROR",
-		);
+		throw new McpClientError("MCP server returned non-JSON response", "PARSE_ERROR");
 	}
 
 	const rpc = data as {
@@ -448,7 +438,7 @@ export async function callHttpTool(
 	if (rpc.error) {
 		throw new McpClientError(
 			`MCP error: ${rpc.error.message} (code ${rpc.error.code})`,
-			"MCP_ERROR",
+			"MCP_ERROR"
 		);
 	}
 

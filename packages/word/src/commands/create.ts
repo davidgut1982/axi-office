@@ -27,15 +27,12 @@ export async function createCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const [out, specArg] = positionals;
 	if (!out || !specArg) {
-		throw new AxiError(
-			"out path and spec-json are required",
-			"VALIDATION_ERROR",
-			["word-axi create <out.docx> <spec-json|->"],
-		);
+		throw new AxiError("out path and spec-json are required", "VALIDATION_ERROR", [
+			"word-axi create <out.docx> <spec-json|->",
+		]);
 	}
 
-	const baseDir =
-		typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
+	const baseDir = typeof flags["base-dir"] === "string" ? flags["base-dir"] : undefined;
 
 	let spec: DocSpec;
 	try {

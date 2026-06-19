@@ -34,15 +34,11 @@ function normalizeDateTime(value: string, role: "start" | "end"): string {
 		const suffix = role === "start" ? "T00:00:00Z" : "T23:59:59Z";
 		return `${value}${suffix}`;
 	}
-	throw new AxiError(
-		`"${value}" is not a valid date or datetime for ${role}`,
-		"VALIDATION_ERROR",
-		[
-			"Accepted formats:",
-			"  YYYY-MM-DD           (bare date, e.g. 2026-01-01)",
-			"  YYYY-MM-DDTHH:MM:SSZ (ISO 8601 datetime, e.g. 2026-01-01T09:00:00Z)",
-		],
-	);
+	throw new AxiError(`"${value}" is not a valid date or datetime for ${role}`, "VALIDATION_ERROR", [
+		"Accepted formats:",
+		"  YYYY-MM-DD           (bare date, e.g. 2026-01-01)",
+		"  YYYY-MM-DDTHH:MM:SSZ (ISO 8601 datetime, e.g. 2026-01-01T09:00:00Z)",
+	]);
 }
 
 export async function calListCommand(args: string[]): Promise<unknown> {
@@ -77,11 +73,9 @@ export async function calCreateCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
 	const [subject, start, end] = positionals;
 	if (!subject || !start || !end) {
-		throw new AxiError(
-			"subject, start and end are required",
-			"VALIDATION_ERROR",
-			["outlook-axi cal-create <subject> <start> <end> [--attendees a@x,b@y]"],
-		);
+		throw new AxiError("subject, start and end are required", "VALIDATION_ERROR", [
+			"outlook-axi cal-create <subject> <start> <end> [--attendees a@x,b@y]",
+		]);
 	}
 
 	const event: Record<string, unknown> = {
