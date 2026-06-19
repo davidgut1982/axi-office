@@ -5,8 +5,8 @@
  * we bypass the wrapper and invoke biome directly.
  */
 import { spawnSync } from "node:child_process";
-import { join } from "node:path";
 import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 const pkgDir = process.cwd();
 const src = join(pkgDir, "src");
@@ -17,9 +17,7 @@ const rootBiome = join(pkgDir, "..", "..", "node_modules", "@biomejs", "biome", 
 const biomeBin = existsSync(localBiome) ? localBiome : rootBiome;
 
 const writeMode = process.argv.slice(2).some((a) => a === "--write" || a === "--fix");
-const biomeArgs = writeMode
-  ? ["check", "--write", src, test]
-  : ["check", src, test];
+const biomeArgs = writeMode ? ["check", "--write", src, test] : ["check", src, test];
 
 const result = spawnSync(process.execPath, [biomeBin, ...biomeArgs], {
   stdio: "inherit",
