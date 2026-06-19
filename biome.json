@@ -10,7 +10,7 @@
   },
   "formatter": {
     "enabled": true,
-    "indentStyle": "space",
+    "indentStyle": "tab",
     "indentWidth": 2,
     "lineWidth": 100
   },
@@ -20,9 +20,6 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "off"
-      },
-      "complexity": {
-        "useLiteralKeys": "off"
       },
       "style": {
         "noNonNullAssertion": "warn"

@@ -1,56 +1,59 @@
 {
-	"name": "@axi-office/core",
-	"version": "0.1.0",
-	"description": "Shared plumbing for @axi-office CLI tools — TOON helpers, MCP STDIO client, flag parser, session hooks",
-	"keywords": ["axi", "agent", "cli", "mcp", "toon", "office"],
-	"license": "MIT",
-	"type": "module",
-	"engines": {
-		"node": ">=20"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"files": ["dist", "README.md"],
-	"exports": {
-		".": {
-			"import": "./dist/index.js",
-			"types": "./dist/index.d.ts"
-		},
-		"./toon": {
-			"import": "./dist/toon.js",
-			"types": "./dist/toon.d.ts"
-		},
-		"./args": {
-			"import": "./dist/args.js",
-			"types": "./dist/args.d.ts"
-		},
-		"./mcp-client": {
-			"import": "./dist/mcp-client.js",
-			"types": "./dist/mcp-client.d.ts"
-		},
-		"./hooks": {
-			"import": "./dist/hooks.js",
-			"types": "./dist/hooks.d.ts"
-		}
-	},
-	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"typecheck": "tsc --noEmit",
-		"lint": "biome check src/ test/",
-		"lint:fix": "biome check --write src/ test/"
-	},
-	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@toon-format/toon": "^2.3.0",
-		"axi-sdk-js": "^0.1.7"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^1.9.0",
-		"@types/node": "^22.0.0",
-		"typescript": "^5.7.0",
-		"vitest": "^3.0.0"
-	}
+  "name": "@axi-office/core",
+  "version": "0.1.0",
+  "description": "Shared plumbing for @axi-office CLI tools — TOON helpers, MCP STDIO client, flag parser, session hooks",
+  "keywords": ["axi", "agent", "cli", "mcp", "toon", "office"],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./toon": {
+      "import": "./dist/toon.js",
+      "types": "./dist/toon.d.ts"
+    },
+    "./args": {
+      "import": "./dist/args.js",
+      "types": "./dist/args.d.ts"
+    },
+    "./mcp-client": {
+      "import": "./dist/mcp-client.js",
+      "types": "./dist/mcp-client.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/hooks.js",
+      "types": "./dist/hooks.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "node -e \"const {spawnSync}=require('child_process');const r=spawnSync(process.execPath,[require('path').resolve('node_modules/@biomejs/biome/bin/biome'),'check',require('path').resolve('src'),require('path').resolve('test')],{stdio:'inherit',shell:false});process.exit(r.status??1)\"",
+    "lint:fix": "node -e \"const {spawnSync}=require('child_process');const r=spawnSync(process.execPath,[require('path').resolve('node_modules/@biomejs/biome/bin/biome'),'check','--write',require('path').resolve('src'),require('path').resolve('test')],{stdio:'inherit',shell:false});process.exit(r.status??1)\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@toon-format/toon": "^2.3.0",
+    "axi-sdk-js": "^0.1.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
 }

@@ -11,3 +11,9 @@ Provides:
 - `callHttpTool()` — single-round-trip HTTP MCP helper.
 - `setupHooksCommand(marker, binaryNames)` — wraps `installSessionStartHooks` for consistent session hook setup.
 - Re-exports `runAxiCli`, `AxiError`, `installSessionStartHooks` from `axi-sdk-js`.
+
+Bug fixes (adversarial review):
+- `McpStdioClient`: clear `connectPromise` on connect failure so subsequent calls retry rather than permanently awaiting a rejected promise.
+- `McpStdioClient`: replace `process.once("exit", ...)` with SIGINT/SIGTERM graceful handlers plus a synchronous SIGKILL backstop on `"exit"`; handlers are registered once at module level to avoid accumulation across instances.
+- `parseFlags`: treat `"--"` as end-of-flags sentinel; remaining tokens become positionals and no spurious `flags[""]` key is produced.
+- Remove dead `scripts/lint.mjs`; lint runs via `biome check src/ test/` directly.

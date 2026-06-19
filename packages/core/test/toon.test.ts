@@ -109,9 +109,7 @@ describe("extract()", () => {
 	});
 
 	it("returns empty sentinel for empty array", () => {
-		const result = extract({ tags: [] }, [
-			joinArray("tags", "name", "tags", "—"),
-		]);
+		const result = extract({ tags: [] }, [joinArray("tags", "name", "tags", "—")]);
 		expect(result.tags).toBe("—");
 	});
 

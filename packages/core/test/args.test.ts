@@ -49,6 +49,28 @@ describe("parseFlags()", () => {
 		expect(result.flags.foo).toBe(true);
 		expect(result.flags.bar).toBe(true);
 	});
+
+	it('treats "--" as end-of-flags sentinel: everything after it is a positional', () => {
+		const result = parseFlags(["--flag", "a", "--", "--not-a-flag", "x"]);
+		expect(result.flags.flag).toBe("a");
+		expect(result.positionals).toEqual(["--not-a-flag", "x"]);
+		// The empty-string key must NOT exist (old bug: flags[""] = true).
+		expect(Object.keys(result.flags)).not.toContain("");
+	});
+
+	it('treats "--" sentinel with no prior flags', () => {
+		const result = parseFlags(["--", "foo", "bar"]);
+		expect(result.positionals).toEqual(["foo", "bar"]);
+		expect(result.flags).toEqual({});
+		expect(Object.keys(result.flags)).not.toContain("");
+	});
+
+	it('treats "--" with nothing after it as empty positionals tail', () => {
+		const result = parseFlags(["--flag", "--"]);
+		expect(result.flags.flag).toBe(true);
+		expect(result.positionals).toEqual([]);
+		expect(Object.keys(result.flags)).not.toContain("");
+	});
 });
 
 describe("parseLimit()", () => {
