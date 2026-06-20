@@ -11,7 +11,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": ["dist", "README.md"],
+	"files": ["dist", "README.md", "LICENSE"],
 	"bin": {
 		"excel-axi": "./dist/bin/excel-axi.js"
 	},

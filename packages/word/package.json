@@ -11,7 +11,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": ["dist", "README.md"],
+	"files": ["dist", "README.md", "LICENSE"],
 	"bin": {
 		"word-axi": "./dist/bin/word-axi.js"
 	},
