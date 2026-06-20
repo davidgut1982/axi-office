@@ -115,13 +115,18 @@ Create a chart in <sheet>. <chart-type> is one of: line, bar, pie, scatter, area
 Example:
   excel-axi chart /data/report.xlsx Sheet1 A1:B4 bar E1`,
 
-	pivot: `excel-axi pivot <file> <sheet> <data-range> <rows-json> <values-json>
+	pivot: `excel-axi pivot <file> <sheet> <data-range> <rows-json> <values-json> [--agg <func>]
 
 Create a pivot table. <rows-json> is a JSON array of field names for row labels.
 <values-json> is a JSON array of field names to aggregate.
+--agg: aggregation function — sum, average, count, min, max (default: sum)
+
+Note: upstream schema lists "mean" as default but the server rejects it; use "average"
+for mean aggregation.
 
 Example:
-  excel-axi pivot /data/report.xlsx Sheet1 A1:C10 '["Name"]' '["Score"]'`,
+  excel-axi pivot /data/report.xlsx Sheet1 A1:C10 '["Name"]' '["Score"]'
+  excel-axi pivot /data/report.xlsx Sheet1 A1:C10 '["Name"]' '["Score"]' --agg average`,
 
 	"copy-sheet": `excel-axi copy-sheet <file> <src> <dst>
 

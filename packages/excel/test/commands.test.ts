@@ -235,7 +235,7 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	// --- pivot ---
-	it("pivot calls create_pivot_table with rows and values arrays", async () => {
+	it("pivot calls create_pivot_table with rows, values, and default agg_func=sum", async () => {
 		await pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]', '["Score"]']);
 		expect(mockCallTool).toHaveBeenCalledWith("create_pivot_table", {
 			filepath: "/tmp/x.xlsx",
@@ -243,7 +243,34 @@ describe("excel commands (haris-musa backend)", () => {
 			data_range: "A1:C10",
 			rows: ["Name"],
 			values: ["Score"],
+			agg_func: "sum",
 		});
+	});
+
+	it("pivot passes explicit --agg flag", async () => {
+		await pivotCommand([
+			"/tmp/x.xlsx",
+			"Sheet1",
+			"A1:C10",
+			'["Name"]',
+			'["Score"]',
+			"--agg",
+			"average",
+		]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_pivot_table", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data_range: "A1:C10",
+			rows: ["Name"],
+			values: ["Score"],
+			agg_func: "average",
+		});
+	});
+
+	it("pivot rejects invalid --agg value", async () => {
+		await expect(
+			pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]', '["Score"]', "--agg", "mean"])
+		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("pivot rejects invalid rows-json", async () => {
