@@ -1,7 +1,7 @@
 {
 	"name": "@axi-office/excel",
 	"version": "0.2.0",
-	"description": "AXI CLI for Excel — wraps negokaz/excel-mcp-server",
+	"description": "AXI CLI for Excel — wraps haris-musa/excel-mcp-server (runs via uvx)",
 	"keywords": [
 		"axi",
 		"agent",

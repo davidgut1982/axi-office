@@ -1,6 +1,7 @@
 /**
- * Why: Each command must call the correct excel-mcp tool with the correct arguments;
- * these tests lock that mapping so a refactor cannot silently change the wire contract.
+ * Why: Each command must call the correct haris-musa excel-mcp tool with the correct
+ * arguments; these tests lock that mapping so a refactor cannot silently change the
+ * wire contract.
  * What: Mocks the client factory and asserts the tool name + arguments per command,
  * plus validation errors for missing positionals.
  * Test: This file is the test.
@@ -14,149 +15,269 @@ vi.mock("../src/client.js", () => ({
 	getClient: () => ({ callTool: mockCallTool, close: vi.fn() }),
 }));
 
+import { chartCommand } from "../src/commands/chart.js";
 import { copySheetCommand } from "../src/commands/copy-sheet.js";
+import { createCommand } from "../src/commands/create.js";
+import { createSheetCommand } from "../src/commands/create-sheet.js";
 import { createTableCommand } from "../src/commands/create-table.js";
 import { formatRangeCommand } from "../src/commands/format-range.js";
+import { formulaCommand } from "../src/commands/formula.js";
+import { infoCommand } from "../src/commands/info.js";
+import { mergeCommand } from "../src/commands/merge.js";
+import { pivotCommand } from "../src/commands/pivot.js";
 import { readCommand } from "../src/commands/read.js";
-import { sheetsCommand } from "../src/commands/sheets.js";
 import { writeCommand } from "../src/commands/write.js";
 
-describe("excel commands", () => {
+describe("excel commands (haris-musa backend)", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockCallTool.mockResolvedValue({ ok: true });
 	});
 
-	it("sheets calls excel_describe_sheets", async () => {
-		await sheetsCommand(["/tmp/x.xlsx"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_describe_sheets", {
-			fileAbsolutePath: "/tmp/x.xlsx",
+	// --- create ---
+	it("create calls create_workbook", async () => {
+		await createCommand(["/tmp/x.xlsx"]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_workbook", {
+			filepath: "/tmp/x.xlsx",
 		});
 	});
 
-	it("sheets requires a file", async () => {
-		await expect(sheetsCommand([])).rejects.toBeInstanceOf(AxiError);
+	it("create requires a file", async () => {
+		await expect(createCommand([])).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("read calls excel_read_sheet with range", async () => {
-		await readCommand(["/tmp/x.xlsx", "Sheet1", "A1:C3"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_read_sheet", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			range: "A1:C3",
+	// --- create-sheet ---
+	it("create-sheet calls create_worksheet", async () => {
+		await createSheetCommand(["/tmp/x.xlsx", "Summary"]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_worksheet", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Summary",
 		});
 	});
 
-	it("read passes --formula as showFormula boolean", async () => {
-		await readCommand(["/tmp/x.xlsx", "Sheet1", "--formula"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_read_sheet", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			showFormula: true,
+	it("create-sheet requires file and sheet", async () => {
+		await expect(createSheetCommand(["/tmp/x.xlsx"])).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- info ---
+	it("info calls get_workbook_metadata", async () => {
+		await infoCommand(["/tmp/x.xlsx"]);
+		expect(mockCallTool).toHaveBeenCalledWith("get_workbook_metadata", {
+			filepath: "/tmp/x.xlsx",
+			include_ranges: false,
 		});
 	});
 
-	it("read passes --style as showStyle boolean", async () => {
-		await readCommand(["/tmp/x.xlsx", "Sheet1", "B2:D4", "--style"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_read_sheet", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			range: "B2:D4",
-			showStyle: true,
+	it("info requires a file", async () => {
+		await expect(infoCommand([])).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- read ---
+	it("read calls read_data_from_excel with start and end cell", async () => {
+		await readCommand(["/tmp/x.xlsx", "Sheet1", "A1", "D20"]);
+		expect(mockCallTool).toHaveBeenCalledWith("read_data_from_excel", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			start_cell: "A1",
+			end_cell: "D20",
 		});
 	});
 
-	it("read does NOT pass knownPagingRanges", async () => {
+	it("read calls read_data_from_excel without optional cells", async () => {
 		await readCommand(["/tmp/x.xlsx", "Sheet1"]);
-		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
-		expect(call).not.toHaveProperty("knownPagingRanges");
+		expect(mockCallTool).toHaveBeenCalledWith("read_data_from_excel", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+		});
 	});
 
 	it("read requires file and sheet", async () => {
 		await expect(readCommand(["/tmp/x.xlsx"])).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("write parses values json and calls excel_write_to_sheet", async () => {
-		await writeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B1", '[["a",1]]']);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_write_to_sheet", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			range: "A1:B1",
-			values: [["a", 1]],
+	// --- write ---
+	it("write calls write_data_to_excel with data array", async () => {
+		await writeCommand(["/tmp/x.xlsx", "Sheet1", '[["Name","Score"],["Alice",90]]']);
+		expect(mockCallTool).toHaveBeenCalledWith("write_data_to_excel", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data: [["Name", "Score"], ["Alice", 90]],
+		});
+	});
+
+	it("write passes optional start_cell", async () => {
+		await writeCommand(["/tmp/x.xlsx", "Sheet1", "[[1,2]]", "B2"]);
+		expect(mockCallTool).toHaveBeenCalledWith("write_data_to_excel", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data: [[1, 2]],
+			start_cell: "B2",
 		});
 	});
 
 	it("write rejects invalid json", async () => {
 		await expect(
-			writeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B1", "not-json"])
+			writeCommand(["/tmp/x.xlsx", "Sheet1", "not-json"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("create-table calls excel_create_table with name", async () => {
-		await createTableCommand(["/tmp/x.xlsx", "Sheet1", "A1:C3", "MyTable"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_create_table", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			range: "A1:C3",
-			tableName: "MyTable",
+	it("write rejects non-array json", async () => {
+		await expect(
+			writeCommand(["/tmp/x.xlsx", "Sheet1", '{"key":"val"}'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- formula ---
+	it("formula calls apply_formula", async () => {
+		await formulaCommand(["/tmp/x.xlsx", "Sheet1", "C2", "=SUM(A1:A10)"]);
+		expect(mockCallTool).toHaveBeenCalledWith("apply_formula", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			cell: "C2",
+			formula: "=SUM(A1:A10)",
 		});
 	});
 
-	it("copy-sheet calls excel_copy_sheet", async () => {
-		await copySheetCommand(["/tmp/x.xlsx", "Src", "Dst"]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_copy_sheet", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			srcSheetName: "Src",
-			dstSheetName: "Dst",
-		});
+	it("formula requires all four args", async () => {
+		await expect(
+			formulaCommand(["/tmp/x.xlsx", "Sheet1", "C2"])
+		).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("format-range sends 2D styles array matching the range grid", async () => {
-		// A1:B2 → 2 rows × 2 cols → 2D array [[row0col0, row0col1],[row1col0, row1col1]]
-		const styles = [[{ font: { bold: true } }, null], [null, null]];
+	// --- format-range ---
+	it("format-range spreads flat style object into tool args", async () => {
 		await formatRangeCommand([
 			"/tmp/x.xlsx",
 			"Sheet1",
-			"A1:B2",
-			JSON.stringify(styles),
+			"A1",
+			'{"bold":true,"font_size":14}',
+			"B1",
 		]);
-		expect(mockCallTool).toHaveBeenCalledWith("excel_format_range", {
-			fileAbsolutePath: "/tmp/x.xlsx",
-			sheetName: "Sheet1",
-			range: "A1:B2",
-			styles,
+		expect(mockCallTool).toHaveBeenCalledWith("format_range", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			start_cell: "A1",
+			end_cell: "B1",
+			bold: true,
+			font_size: 14,
 		});
 	});
 
-	it("format-range rejects non-array styles json", async () => {
-		// A flat object is not the 2D array the tool requires
+	it("format-range without end-cell omits end_cell", async () => {
+		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", '{"italic":true}']);
+		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(call).not.toHaveProperty("end_cell");
+		expect(call).toHaveProperty("italic", true);
+	});
+
+	it("format-range rejects a 2D array (negokaz shape)", async () => {
 		await expect(
-			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", '{"bold":true}'])
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", "[[null,null]]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("format-range rejects styles with wrong row count", async () => {
-		// A1:B2 needs 2 rows but we supply 1
+	it("format-range rejects invalid json", async () => {
 		await expect(
-			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1:B2", "[[null,null]]"])
+			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", "not-json"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("format-range rejects styles with wrong column count", async () => {
-		// A1:B2 needs 2 cols per row but we supply 3
+	// --- merge ---
+	it("merge calls merge_cells", async () => {
+		await mergeCommand(["/tmp/x.xlsx", "Sheet1", "A1", "C1"]);
+		expect(mockCallTool).toHaveBeenCalledWith("merge_cells", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			start_cell: "A1",
+			end_cell: "C1",
+		});
+	});
+
+	it("merge requires all four args", async () => {
 		await expect(
-			formatRangeCommand([
-				"/tmp/x.xlsx",
-				"Sheet1",
-				"A1:B2",
-				"[[null,null,null],[null,null,null]]",
-			])
+			mergeCommand(["/tmp/x.xlsx", "Sheet1", "A1"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
-	it("format-range rejects invalid range notation", async () => {
+	// --- table ---
+	it("table calls create_table with data_range", async () => {
+		await createTableCommand(["/tmp/x.xlsx", "Sheet1", "A1:C3", "MyTable"]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_table", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data_range: "A1:C3",
+			table_name: "MyTable",
+		});
+	});
+
+	it("table omits table_name when not provided", async () => {
+		await createTableCommand(["/tmp/x.xlsx", "Sheet1", "A1:C3"]);
+		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(call).not.toHaveProperty("table_name");
+		expect(call).toHaveProperty("data_range", "A1:C3");
+	});
+
+	// --- chart ---
+	it("chart calls create_chart", async () => {
+		await chartCommand(["/tmp/x.xlsx", "Sheet1", "A1:B4", "bar", "E1"]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_chart", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data_range: "A1:B4",
+			chart_type: "bar",
+			target_cell: "E1",
+		});
+	});
+
+	it("chart rejects invalid chart type", async () => {
 		await expect(
-			formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "invalid", "[[null]]"])
+			chartCommand(["/tmp/x.xlsx", "Sheet1", "A1:B4", "donut", "E1"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("chart requires all five args", async () => {
+		await expect(
+			chartCommand(["/tmp/x.xlsx", "Sheet1", "A1:B4", "bar"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- pivot ---
+	it("pivot calls create_pivot_table with rows and values arrays", async () => {
+		await pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]', '["Score"]']);
+		expect(mockCallTool).toHaveBeenCalledWith("create_pivot_table", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data_range: "A1:C10",
+			rows: ["Name"],
+			values: ["Score"],
+		});
+	});
+
+	it("pivot rejects invalid rows-json", async () => {
+		await expect(
+			pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", "not-json", '["Score"]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("pivot requires all five args", async () => {
+		await expect(
+			pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- copy-sheet ---
+	it("copy-sheet calls copy_worksheet with source_sheet / target_sheet", async () => {
+		await copySheetCommand(["/tmp/x.xlsx", "Src", "Dst"]);
+		expect(mockCallTool).toHaveBeenCalledWith("copy_worksheet", {
+			filepath: "/tmp/x.xlsx",
+			source_sheet: "Src",
+			target_sheet: "Dst",
+		});
+	});
+
+	it("copy-sheet requires all three args", async () => {
+		await expect(
+			copySheetCommand(["/tmp/x.xlsx", "Src"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 });

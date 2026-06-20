@@ -9,8 +9,21 @@
 export function homeCommand(_args: string[]): Record<string, unknown> {
 	return {
 		bin: "excel-axi",
-		description: "AXI CLI for Excel (via negokaz/excel-mcp-server)",
-		commands: ["sheets", "read", "write", "create-table", "copy-sheet", "format-range"],
+		description: "AXI CLI for Excel (via haris-musa/excel-mcp-server, run with uvx)",
+		commands: [
+			"create",
+			"create-sheet",
+			"info",
+			"read",
+			"write",
+			"formula",
+			"format-range",
+			"merge",
+			"table",
+			"chart",
+			"pivot",
+			"copy-sheet",
+		],
 		help: "Run `excel-axi <command> --help` for details",
 	};
 }
