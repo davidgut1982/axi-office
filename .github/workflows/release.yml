@@ -36,17 +36,18 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          set -x
-          CHANGESET_COUNT=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l)
-          echo "Found $CHANGESET_COUNT changeset(s)"
-          if [ "$CHANGESET_COUNT" -gt 0 ]; then
-            echo "Publishing changesets..."
-            pnpm changeset version || { echo "changeset version failed"; exit 1; }
-            git add -A
-            git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
-            pnpm changeset publish || { echo "changeset publish failed"; exit 1; }
-            git push --follow-tags origin HEAD:main || echo "WARN: push-back failed (branch protection?), but publish may have succeeded"
-          else
-            echo "No changesets pending; nothing to release."
-            exit 1
-          fi
+          echo "=== Checking for changesets ==="
+          find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null || true
+          echo "=== Running pnpm changeset version ==="
+          pnpm changeset version
+          echo "=== Git status after changeset version ==="
+          git status
+          echo "=== Adding changes ==="
+          git add -A
+          echo "=== Committing ==="
+          git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
+          echo "=== Publishing to npm ==="
+          pnpm changeset publish
+          echo "=== Pushing tags and commits ==="
+          git push --follow-tags origin HEAD:main || echo "WARN: push-back failed (branch protection?), but publish may have succeeded"
+          echo "=== Release complete ==="
