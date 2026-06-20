@@ -36,10 +36,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "NPM_TOKEN is set: ${NPM_TOKEN:+yes}"
-          echo "NODE_AUTH_TOKEN is set: ${NODE_AUTH_TOKEN:+yes}"
-          pnpm changeset version || exit 1
+          pnpm changeset version
           git add -A
-          git commit -m "chore: release packages [skip ci]" || echo "no changes to commit"
-          pnpm changeset publish || exit 1
-          git push --follow-tags origin HEAD:main || true
+          git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
+          pnpm changeset publish
+          git push --follow-tags origin HEAD:main || echo "push failed"
