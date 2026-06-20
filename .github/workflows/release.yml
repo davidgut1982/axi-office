@@ -36,8 +36,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          pnpm changeset version
-          git add -A
-          git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
+          if ls .changeset/*.md 2>/dev/null | grep -qv 'README.md'; then
+            pnpm changeset version
+            git add -A
+            git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
+            git push origin HEAD:main || echo "WARN push-back failed"
+          fi
+          pnpm -r build
           pnpm changeset publish
-          git push --follow-tags origin HEAD:main || echo "push failed"
+          git push --follow-tags origin HEAD:main || echo "WARN tag push failed"
