@@ -1,6 +1,6 @@
 {
 	"name": "@axi-office/core",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Shared plumbing for @axi-office CLI tools — TOON helpers, MCP STDIO client, flag parser, session hooks",
 	"keywords": [
 		"axi",
