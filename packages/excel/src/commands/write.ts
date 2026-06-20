@@ -17,7 +17,7 @@ export async function writeCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("file, sheet and data-json are required", "VALIDATION_ERROR", [
 			"excel-axi write <file> <sheet> <data-json> [start-cell]",
 			"",
-			"  <data-json>    JSON array of row arrays, e.g. '[[\"Name\",\"Score\"],[\"Alice\",90]]'",
+			'  <data-json>    JSON array of row arrays, e.g. \'[["Name","Score"],["Alice",90]]\'',
 			"  [start-cell]   Cell to start writing at (default: A1)",
 		]);
 	}

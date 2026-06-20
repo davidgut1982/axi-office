@@ -17,9 +17,9 @@ vi.mock("../src/client.js", () => ({
 
 import { chartCommand } from "../src/commands/chart.js";
 import { copySheetCommand } from "../src/commands/copy-sheet.js";
-import { createCommand } from "../src/commands/create.js";
 import { createSheetCommand } from "../src/commands/create-sheet.js";
 import { createTableCommand } from "../src/commands/create-table.js";
+import { createCommand } from "../src/commands/create.js";
 import { formatRangeCommand } from "../src/commands/format-range.js";
 import { formulaCommand } from "../src/commands/formula.js";
 import { infoCommand } from "../src/commands/info.js";
@@ -101,7 +101,10 @@ describe("excel commands (haris-musa backend)", () => {
 		expect(mockCallTool).toHaveBeenCalledWith("write_data_to_excel", {
 			filepath: "/tmp/x.xlsx",
 			sheet_name: "Sheet1",
-			data: [["Name", "Score"], ["Alice", 90]],
+			data: [
+				["Name", "Score"],
+				["Alice", 90],
+			],
 		});
 	});
 
@@ -116,15 +119,15 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	it("write rejects invalid json", async () => {
-		await expect(
-			writeCommand(["/tmp/x.xlsx", "Sheet1", "not-json"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(writeCommand(["/tmp/x.xlsx", "Sheet1", "not-json"])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 
 	it("write rejects non-array json", async () => {
-		await expect(
-			writeCommand(["/tmp/x.xlsx", "Sheet1", '{"key":"val"}'])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(writeCommand(["/tmp/x.xlsx", "Sheet1", '{"key":"val"}'])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 
 	// --- formula ---
@@ -139,20 +142,12 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	it("formula requires all four args", async () => {
-		await expect(
-			formulaCommand(["/tmp/x.xlsx", "Sheet1", "C2"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(formulaCommand(["/tmp/x.xlsx", "Sheet1", "C2"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	// --- format-range ---
 	it("format-range spreads flat style object into tool args", async () => {
-		await formatRangeCommand([
-			"/tmp/x.xlsx",
-			"Sheet1",
-			"A1",
-			'{"bold":true,"font_size":14}',
-			"B1",
-		]);
+		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", '{"bold":true,"font_size":14}', "B1"]);
 		expect(mockCallTool).toHaveBeenCalledWith("format_range", {
 			filepath: "/tmp/x.xlsx",
 			sheet_name: "Sheet1",
@@ -194,9 +189,7 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	it("merge requires all four args", async () => {
-		await expect(
-			mergeCommand(["/tmp/x.xlsx", "Sheet1", "A1"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(mergeCommand(["/tmp/x.xlsx", "Sheet1", "A1"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	// --- table ---
@@ -236,9 +229,9 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	it("chart requires all five args", async () => {
-		await expect(
-			chartCommand(["/tmp/x.xlsx", "Sheet1", "A1:B4", "bar"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(chartCommand(["/tmp/x.xlsx", "Sheet1", "A1:B4", "bar"])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 
 	// --- pivot ---
@@ -276,8 +269,6 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	it("copy-sheet requires all three args", async () => {
-		await expect(
-			copySheetCommand(["/tmp/x.xlsx", "Src"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(copySheetCommand(["/tmp/x.xlsx", "Src"])).rejects.toBeInstanceOf(AxiError);
 	});
 });

@@ -12,9 +12,7 @@ export async function infoCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
 	const file = positionals[0];
 	if (!file) {
-		throw new AxiError("file path is required", "VALIDATION_ERROR", [
-			"excel-axi info <file>",
-		]);
+		throw new AxiError("file path is required", "VALIDATION_ERROR", ["excel-axi info <file>"]);
 	}
 
 	return getClient().callTool("get_workbook_metadata", {

@@ -12,11 +12,9 @@ export async function mergeCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
 	const [file, sheet, startCell, endCell] = positionals;
 	if (!file || !sheet || !startCell || !endCell) {
-		throw new AxiError(
-			"file, sheet, start-cell and end-cell are required",
-			"VALIDATION_ERROR",
-			["excel-axi merge <file> <sheet> <start-cell> <end-cell>"]
-		);
+		throw new AxiError("file, sheet, start-cell and end-cell are required", "VALIDATION_ERROR", [
+			"excel-axi merge <file> <sheet> <start-cell> <end-cell>",
+		]);
 	}
 
 	return getClient().callTool("merge_cells", {

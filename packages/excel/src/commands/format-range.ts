@@ -17,21 +17,17 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
 	const [file, sheet, startCell, formatJson, endCell] = positionals;
 	if (!file || !sheet || !startCell || !formatJson) {
-		throw new AxiError(
-			"file, sheet, start-cell and format-json are required",
-			"VALIDATION_ERROR",
-			[
-				"excel-axi format-range <file> <sheet> <start-cell> <format-json> [end-cell]",
-				"",
-				"<format-json> is a flat JSON object with style properties:",
-				"  bold (bool), italic (bool), underline (bool)",
-				"  font_size (int), font_color (str), bg_color (str)",
-				"  border_style (str), border_color (str)",
-				"  number_format (str), alignment (str), wrap_text (bool)",
-				"",
-				'Example: \'{"bold":true,"font_size":14,"bg_color":"FFFF00"}\'',
-			]
-		);
+		throw new AxiError("file, sheet, start-cell and format-json are required", "VALIDATION_ERROR", [
+			"excel-axi format-range <file> <sheet> <start-cell> <format-json> [end-cell]",
+			"",
+			"<format-json> is a flat JSON object with style properties:",
+			"  bold (bool), italic (bool), underline (bool)",
+			"  font_size (int), font_color (str), bg_color (str)",
+			"  border_style (str), border_color (str)",
+			"  number_format (str), alignment (str), wrap_text (bool)",
+			"",
+			'Example: \'{"bold":true,"font_size":14,"bg_color":"FFFF00"}\'',
+		]);
 	}
 
 	let styleObj: unknown;

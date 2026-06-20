@@ -28,11 +28,9 @@ export async function chartCommand(args: string[]): Promise<unknown> {
 	}
 
 	if (!VALID_CHART_TYPES.includes(chartType as (typeof VALID_CHART_TYPES)[number])) {
-		throw new AxiError(
-			`chart-type "${chartType}" is not supported`,
-			"VALIDATION_ERROR",
-			[`Supported types: ${VALID_CHART_TYPES.join(", ")}`]
-		);
+		throw new AxiError(`chart-type "${chartType}" is not supported`, "VALIDATION_ERROR", [
+			`Supported types: ${VALID_CHART_TYPES.join(", ")}`,
+		]);
 	}
 
 	return getClient().callTool("create_chart", {
