@@ -36,16 +36,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          set -e
-          echo "=== Step 1: Check for changesets ==="
-          find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null | wc -l || true
-          echo "=== Step 2: Version packages ==="
           pnpm changeset version
-          echo "=== Step 3: Stage and commit version changes ==="
           git add -A
-          git commit -m "chore: release packages [skip ci]" || echo "nothing to commit"
-          echo "=== Step 4: Publish to NPM ==="
+          git commit -m "chore: release packages [skip ci]" || true
           pnpm changeset publish
-          echo "=== Step 5: Push to GitHub ==="
-          git push --follow-tags origin HEAD:main 2>&1 || (echo "WARN: push failed but publish succeeded"; exit 0)
-          echo "=== Release complete ==="
+          git push --follow-tags origin HEAD:main || true
