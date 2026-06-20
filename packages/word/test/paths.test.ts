@@ -24,9 +24,7 @@ describe("resolveInBase", () => {
 	});
 
 	it("rejects traversal via ../", () => {
-		expect(() => resolveInBase(base, "/safe/dir/../etc/passwd")).toThrow(
-			AxiError,
-		);
+		expect(() => resolveInBase(base, "/safe/dir/../etc/passwd")).toThrow(AxiError);
 		try {
 			resolveInBase(base, "/safe/dir/../etc/passwd");
 		} catch (e) {
@@ -44,9 +42,7 @@ describe("resolveInBase", () => {
 	});
 
 	it("rejects a path that is a prefix match but not a subpath (e.g. /safe/dirother)", () => {
-		expect(() => resolveInBase(base, "/safe/dirother/file.docx")).toThrow(
-			AxiError,
-		);
+		expect(() => resolveInBase(base, "/safe/dirother/file.docx")).toThrow(AxiError);
 	});
 
 	it("returns resolved path without sandbox when baseDir is undefined", () => {

@@ -60,11 +60,10 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	// --- info ---
-	it("info calls get_workbook_metadata", async () => {
+	it("info calls get_workbook_metadata without hardcoded include_ranges", async () => {
 		await infoCommand(["/tmp/x.xlsx"]);
 		expect(mockCallTool).toHaveBeenCalledWith("get_workbook_metadata", {
 			filepath: "/tmp/x.xlsx",
-			include_ranges: false,
 		});
 	});
 
@@ -130,6 +129,12 @@ describe("excel commands (haris-musa backend)", () => {
 		);
 	});
 
+	it("write rejects a flat (1D) array", async () => {
+		await expect(
+			writeCommand(["/tmp/x.xlsx", "Sheet1", '["Name","Score"]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
 	// --- formula ---
 	it("formula calls apply_formula", async () => {
 		await formulaCommand(["/tmp/x.xlsx", "Sheet1", "C2", "=SUM(A1:A10)"]);
@@ -146,8 +151,15 @@ describe("excel commands (haris-musa backend)", () => {
 	});
 
 	// --- format-range ---
-	it("format-range spreads flat style object into tool args", async () => {
-		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", '{"bold":true,"font_size":14}', "B1"]);
+	it("format-range spreads flat style object into tool args with --end flag", async () => {
+		await formatRangeCommand([
+			"/tmp/x.xlsx",
+			"Sheet1",
+			"A1",
+			'{"bold":true,"font_size":14}',
+			"--end",
+			"B1",
+		]);
 		expect(mockCallTool).toHaveBeenCalledWith("format_range", {
 			filepath: "/tmp/x.xlsx",
 			sheet_name: "Sheet1",
@@ -158,7 +170,7 @@ describe("excel commands (haris-musa backend)", () => {
 		});
 	});
 
-	it("format-range without end-cell omits end_cell", async () => {
+	it("format-range without --end flag omits end_cell", async () => {
 		await formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1", '{"italic":true}']);
 		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
 		expect(call).not.toHaveProperty("end_cell");
@@ -282,6 +294,61 @@ describe("excel commands (haris-musa backend)", () => {
 	it("pivot requires all five args", async () => {
 		await expect(
 			pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("pivot passes --columns when provided", async () => {
+		await pivotCommand([
+			"/tmp/x.xlsx",
+			"Sheet1",
+			"A1:C10",
+			'["Name"]',
+			'["Score"]',
+			"--columns",
+			'["Region"]',
+		]);
+		expect(mockCallTool).toHaveBeenCalledWith("create_pivot_table", {
+			filepath: "/tmp/x.xlsx",
+			sheet_name: "Sheet1",
+			data_range: "A1:C10",
+			rows: ["Name"],
+			values: ["Score"],
+			agg_func: "sum",
+			columns: ["Region"],
+		});
+	});
+
+	it("pivot omits columns from tool args when --columns is not given", async () => {
+		await pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10", '["Name"]', '["Score"]']);
+		const call = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(call).not.toHaveProperty("columns");
+	});
+
+	it("pivot rejects invalid --columns json", async () => {
+		await expect(
+			pivotCommand([
+				"/tmp/x.xlsx",
+				"Sheet1",
+				"A1:C10",
+				'["Name"]',
+				'["Score"]',
+				"--columns",
+				"not-json",
+			])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("pivot rejects non-array --columns value", async () => {
+		await expect(
+			pivotCommand([
+				"/tmp/x.xlsx",
+				"Sheet1",
+				"A1:C10",
+				'["Name"]',
+				'["Score"]',
+				"--columns",
+				'"Region"',
+			])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 

@@ -53,6 +53,19 @@ export interface McpStdioClientOptions {
 	 * (or a negative value) to disable the timeout entirely.
 	 */
 	connectTimeoutMs?: number;
+	/**
+	 * How to handle stderr of the child MCP process. Mirrors Node's child_process
+	 * spawn stdio options (e.g. "inherit", "pipe", "ignore").
+	 *
+	 * Defaults to "inherit" (child stderr appears on the parent's terminal).
+	 * Set to "ignore" to suppress server-side tracebacks that some MCP servers
+	 * (e.g. haris-musa/excel-mcp-server) print on clean shutdown due to an
+	 * upstream bug where `print("Service stopped.")` raises ValueError when the
+	 * stdio pipe is already closed.
+	 * Set to "pipe" to capture stderr programmatically via the transport's
+	 * .stderr stream.
+	 */
+	stderr?: "inherit" | "pipe" | "ignore" | "overlapped";
 }
 
 /**
@@ -82,6 +95,22 @@ let _signalHandlersRegistered = false;
  */
 export function _getLiveClientsForTest(): ReadonlySet<McpStdioClient> {
 	return _liveClients;
+}
+
+/**
+ * Why: Bins need to await clean teardown of all spawned MCP child processes
+ * before calling process.exit(), so that the child flushes stderr and exits
+ * cleanly before Node closes the stdio fds. Without this, the Python MCP
+ * server prints "ValueError: I/O operation on closed file" / "Service stopped."
+ * tracebacks to the terminal after every command.
+ * What: Calls close() on every client currently in the live-clients registry,
+ * swallowing individual errors via Promise.allSettled so one stuck client does
+ * not block others from being torn down.
+ * Test: Register two McpStdioClient instances; call closeAllLiveClients(); assert
+ * both clients' close() was called and the registry is empty afterward.
+ */
+export async function closeAllLiveClients(): Promise<void> {
+	await Promise.allSettled(Array.from(_liveClients).map((c) => c.close()));
 }
 
 /**
@@ -176,6 +205,7 @@ export class McpStdioClient {
 			command: options.command,
 			args: options.args,
 			connectTimeoutMs: options.connectTimeoutMs ?? 30000,
+			stderr: options.stderr ?? "inherit",
 		};
 	}
 
@@ -223,6 +253,7 @@ export class McpStdioClient {
 				const transport = new StdioClientTransport({
 					command: this.opts.command,
 					args: this.opts.args,
+					stderr: this.opts.stderr,
 				});
 
 				const client = new Client(

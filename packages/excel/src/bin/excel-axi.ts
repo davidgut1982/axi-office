@@ -10,7 +10,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AxiError, runAxiCli, setupHooksCommand } from "@axi-office/core";
+import { AxiError, closeAllLiveClients, runAxiCli, setupHooksCommand } from "@axi-office/core";
 import { chartCommand } from "../commands/chart.js";
 import { copySheetCommand } from "../commands/copy-sheet.js";
 import { createSheetCommand } from "../commands/create-sheet.js";
@@ -87,7 +87,11 @@ await runAxiCli({
 	},
 });
 
-// Force exit so the MCP subprocess does not keep Node alive after the command
-// completes. The "exit" event fires synchronously, triggering _syncKillChild()
-// on every live McpStdioClient so the child is SIGKILL'd before Node exits.
+// Await graceful teardown of all live MCP child processes before exiting so
+// the Python server has a chance to flush stderr and exit cleanly. Without
+// this, the child's stderr pipe is closed by Node before the child exits,
+// causing "ValueError: I/O operation on closed file" / "Service stopped."
+// tracebacks printed after every command. The synchronous "exit" backstop
+// (_syncKillChild) still fires for any stragglers.
+await closeAllLiveClients();
 process.exit(process.exitCode ?? 0);

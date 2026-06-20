@@ -3,11 +3,14 @@
  * create_pivot_table MCP tool.
  * What: Validates <file> <sheet> <data-range> <rows-json> <values-json> and calls
  * create_pivot_table. rows and values are JSON arrays of field name strings.
+ * Optional --columns <json-array> adds column grouping fields; validated as a string
+ * array like rows/values and only passed to the tool when provided.
  * Note: The upstream schema claims "mean" as default but the server rejects it;
  * the accepted values are sum, average, count, min, max. We default to "sum".
  * Test: Mock the client, call pivotCommand(["/tmp/x.xlsx", "Sheet1", "A1:C10",
  * '["Name"]', '["Score"]']), assert callTool was invoked with "create_pivot_table"
- * and rows === ["Name"] and values === ["Score"].
+ * and rows === ["Name"] and values === ["Score"]. Also: pass --columns '["Region"]'
+ * and assert columns === ["Region"] is included in the tool args.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
@@ -24,11 +27,12 @@ export async function pivotCommand(args: string[]): Promise<unknown> {
 			"file, sheet, data-range, rows-json and values-json are required",
 			"VALIDATION_ERROR",
 			[
-				"excel-axi pivot <file> <sheet> <data-range> <rows-json> <values-json> [--agg sum|average|count|min|max]",
+				"excel-axi pivot <file> <sheet> <data-range> <rows-json> <values-json> [--agg sum|average|count|min|max] [--columns <json-array>]",
 				"",
-				"  <rows-json>    JSON array of field names for row labels, e.g. '[\"Name\"]'",
-				"  <values-json>  JSON array of field names to aggregate, e.g. '[\"Score\"]'",
-				"  --agg          Aggregation function (default: sum)",
+				"  <rows-json>     JSON array of field names for row labels, e.g. '[\"Name\"]'",
+				"  <values-json>   JSON array of field names to aggregate, e.g. '[\"Score\"]'",
+				"  --agg           Aggregation function (default: sum)",
+				"  --columns       JSON array of field names for column grouping, e.g. '[\"Region\"]'",
 			]
 		);
 	}
@@ -66,12 +70,34 @@ export async function pivotCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return getClient().callTool("create_pivot_table", {
+	let columns: unknown[] | undefined;
+	if (typeof flags.columns === "string") {
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(flags.columns);
+		} catch {
+			throw new AxiError("--columns is not valid JSON", "VALIDATION_ERROR", [
+				'Example: \'["Region","Category"]\'',
+			]);
+		}
+		if (!Array.isArray(parsed)) {
+			throw new AxiError(
+				"--columns must be a JSON array of field name strings",
+				"VALIDATION_ERROR"
+			);
+		}
+		columns = parsed;
+	}
+
+	const toolArgs: Record<string, unknown> = {
 		filepath: file,
 		sheet_name: sheet,
 		data_range: dataRange,
 		rows,
 		values,
 		agg_func: aggFunc,
-	});
+	};
+	if (columns !== undefined) toolArgs.columns = columns;
+
+	return getClient().callTool("create_pivot_table", toolArgs);
 }

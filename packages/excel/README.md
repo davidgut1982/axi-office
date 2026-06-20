@@ -17,6 +17,8 @@ Install `uv` once per machine:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+(other install methods: https://docs.astral.sh/uv/getting-started/installation/ )
+
 On first run, `uvx` will auto-fetch the pinned server
 (`excel-mcp-server@0.1.8`) from PyPI. Subsequent runs use the local cache.
 No Microsoft Excel installation is required.
@@ -92,6 +94,8 @@ excel-axi copy-sheet /data/report.xlsx Sheet1 Sheet1Copy
 
 File paths should be absolute. Output is rendered as
 [TOON](https://github.com/toon-format/toon) for token-efficient agent consumption.
+
+**Security note:** Paths are not sandboxed — the server reads/writes any path your user account can access; pass absolute paths.
 
 ## Pinned server version
 

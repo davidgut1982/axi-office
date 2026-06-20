@@ -1,11 +1,13 @@
 /**
  * Why: Writing structured values into a sheet is a core operation; this maps `write`
  * to the write_data_to_excel MCP tool (haris-musa backend).
- * What: Validates <file> <sheet> <data-json>, parses the JSON 2D array, and
- * forwards it to write_data_to_excel. Optional start-cell defaults to A1.
+ * What: Validates <file> <sheet> <data-json>, parses the JSON 2D array (array of
+ * row arrays), and forwards it to write_data_to_excel. Optional start-cell defaults
+ * to A1. Rejects flat arrays (1D) with a clear error pointing at the correct shape.
  * Note: The haris-musa tool takes `data` (List[List]) + `start_cell`, not a range.
  * Test: Mock the client, call writeCommand(["/tmp/x.xlsx", "Sheet1", "[[1,2]]"]),
  * assert callTool was invoked with "write_data_to_excel" and data === [[1, 2]].
+ * Also: pass '[1,2]' (1D array) and assert AxiError with VALIDATION_ERROR is thrown.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
@@ -32,6 +34,11 @@ export async function writeCommand(args: string[]): Promise<unknown> {
 	}
 	if (!Array.isArray(data)) {
 		throw new AxiError("data-json must be a JSON array of row arrays", "VALIDATION_ERROR");
+	}
+	if (data.length > 0 && !Array.isArray(data[0])) {
+		throw new AxiError("data-json must be a 2D array (array of row arrays)", "VALIDATION_ERROR", [
+			'Example: [["Name","Score"],["Alice",90]]',
+		]);
 	}
 
 	const toolArgs: Record<string, unknown> = {

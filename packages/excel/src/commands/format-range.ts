@@ -3,22 +3,23 @@
  * `format-range` to the format_range MCP tool (haris-musa backend).
  * What: Validates <file> <sheet> <start-cell> <format-json>, parses a flat style
  * object (bold, italic, font_size, font_color, bg_color, etc.), and forwards it to
- * format_range. Optional end-cell widens the range.
+ * format_range. Optional --end <cell> widens the range. The end cell is a named flag
+ * rather than a positional so the CLI signature is unambiguous.
  * Note: The haris-musa tool takes flat style properties directly, NOT the negokaz
  * 2D per-cell array. <format-json> must be a plain object, not a 2D array.
  * Test: Mock the client, call formatRangeCommand(["/tmp/x.xlsx", "Sheet1", "A1",
- * '{"bold":true}', "B1"]), assert callTool was invoked with "format_range" and
- * the spread style keys alongside filepath/sheet_name/start_cell/end_cell.
+ * '{"bold":true}', "--end", "B1"]), assert callTool was invoked with "format_range"
+ * and the spread style keys alongside filepath/sheet_name/start_cell/end_cell.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function formatRangeCommand(args: string[]): Promise<unknown> {
-	const { positionals } = parseFlags(args);
-	const [file, sheet, startCell, formatJson, endCell] = positionals;
+	const { positionals, flags } = parseFlags(args);
+	const [file, sheet, startCell, formatJson] = positionals;
 	if (!file || !sheet || !startCell || !formatJson) {
 		throw new AxiError("file, sheet, start-cell and format-json are required", "VALIDATION_ERROR", [
-			"excel-axi format-range <file> <sheet> <start-cell> <format-json> [end-cell]",
+			"excel-axi format-range <file> <sheet> <start-cell> <format-json> [--end <cell>]",
 			"",
 			"<format-json> is a flat JSON object with style properties:",
 			"  bold (bool), italic (bool), underline (bool)",
@@ -49,6 +50,8 @@ export async function formatRangeCommand(args: string[]): Promise<unknown> {
 			]
 		);
 	}
+
+	const endCell = typeof flags.end === "string" ? flags.end : undefined;
 
 	const toolArgs: Record<string, unknown> = {
 		filepath: file,
