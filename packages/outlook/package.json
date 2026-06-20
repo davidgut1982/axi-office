@@ -2,15 +2,7 @@
 	"name": "@axi-office/outlook",
 	"version": "0.2.0",
 	"description": "AXI CLI for Outlook — wraps softeria/ms-365-mcp-server (mail, calendar, contacts)",
-	"keywords": [
-		"axi",
-		"agent",
-		"cli",
-		"outlook",
-		"ms365",
-		"mcp",
-		"office"
-	],
+	"keywords": ["axi", "agent", "cli", "outlook", "ms365", "mcp", "office"],
 	"license": "MIT",
 	"type": "module",
 	"engines": {
@@ -19,10 +11,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": [
-		"dist",
-		"README.md"
-	],
+	"files": ["dist", "README.md"],
 	"bin": {
 		"outlook-axi": "./dist/bin/outlook-axi.js"
 	},

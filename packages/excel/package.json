@@ -1,15 +1,8 @@
 {
 	"name": "@axi-office/excel",
 	"version": "0.2.0",
-	"description": "AXI CLI for Excel — wraps negokaz/excel-mcp-server",
-	"keywords": [
-		"axi",
-		"agent",
-		"cli",
-		"excel",
-		"mcp",
-		"office"
-	],
+	"description": "AXI CLI for Excel — wraps haris-musa/excel-mcp-server (runs via uvx)",
+	"keywords": ["axi", "agent", "cli", "excel", "mcp", "office"],
 	"license": "MIT",
 	"type": "module",
 	"engines": {
@@ -18,10 +11,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": [
-		"dist",
-		"README.md"
-	],
+	"files": ["dist", "README.md"],
 	"bin": {
 		"excel-axi": "./dist/bin/excel-axi.js"
 	},

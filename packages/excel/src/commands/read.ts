@@ -1,39 +1,32 @@
 /**
- * Why: Reading cell values is the most common Excel operation; this maps `read` to the
- * excel_read_sheet MCP tool, with an optional A1 range and optional formula/style flags.
- * What: Validates <file> and <sheet>, forwards an optional range, --formula, and --style
- * boolean flags to excel_read_sheet.
- * Test: Mock the client, call readCommand(["/tmp/x.xlsx", "Sheet1", "A1:C3"]), assert
- * callTool was invoked with "excel_read_sheet" and the matching range argument.
- *
- * Note: Cell paging is controlled server-side by the EXCEL_MCP_PAGING_CELLS_LIMIT env var
- * (default 2000) set on the excel-mcp-server process. There is no client-side paging flag.
+ * Why: Reading cell data is the most common Excel operation; this maps `read` to
+ * the read_data_from_excel MCP tool (haris-musa backend).
+ * What: Validates <file> and <sheet>, forwards optional start_cell and end_cell
+ * positionals to read_data_from_excel.
+ * Test: Mock the client, call readCommand(["/tmp/x.xlsx", "Sheet1", "A1", "D20"]),
+ * assert callTool was invoked with "read_data_from_excel" and the matching args.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { getClient } from "../client.js";
 
 export async function readCommand(args: string[]): Promise<unknown> {
-	const { positionals, flags } = parseFlags(args, ["formula", "style"]);
-	const [file, sheet, range] = positionals;
+	const { positionals } = parseFlags(args);
+	const [file, sheet, startCell, endCell] = positionals;
 	if (!file || !sheet) {
 		throw new AxiError("file and sheet are required", "VALIDATION_ERROR", [
-			"excel-axi read <file> <sheet> [range] [--formula] [--style]",
+			"excel-axi read <file> <sheet> [start-cell] [end-cell]",
 			"",
-			"  --formula    Show cell formulas instead of computed values",
-			"  --style      Include style information for each cell",
-			"",
-			"Tip: set EXCEL_MCP_PAGING_CELLS_LIMIT=N on the server process to control",
-			"     how many cells are returned per page (default: 2000).",
+			"  start-cell   Starting cell in A1 notation (default: A1)",
+			"  end-cell     Ending cell in A1 notation (optional, auto-expands if omitted)",
 		]);
 	}
 
 	const toolArgs: Record<string, unknown> = {
-		fileAbsolutePath: file,
-		sheetName: sheet,
+		filepath: file,
+		sheet_name: sheet,
 	};
-	if (range) toolArgs.range = range;
-	if (flags.formula === true) toolArgs.showFormula = true;
-	if (flags.style === true) toolArgs.showStyle = true;
+	if (startCell) toolArgs.start_cell = startCell;
+	if (endCell) toolArgs.end_cell = endCell;
 
-	return getClient().callTool("excel_read_sheet", toolArgs);
+	return getClient().callTool("read_data_from_excel", toolArgs);
 }

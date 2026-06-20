@@ -10,12 +10,18 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AxiError, runAxiCli, setupHooksCommand } from "@axi-office/core";
+import { AxiError, closeAllLiveClients, runAxiCli, setupHooksCommand } from "@axi-office/core";
+import { chartCommand } from "../commands/chart.js";
 import { copySheetCommand } from "../commands/copy-sheet.js";
+import { createSheetCommand } from "../commands/create-sheet.js";
 import { createTableCommand } from "../commands/create-table.js";
+import { createCommand } from "../commands/create.js";
 import { formatRangeCommand } from "../commands/format-range.js";
+import { formulaCommand } from "../commands/formula.js";
+import { infoCommand } from "../commands/info.js";
+import { mergeCommand } from "../commands/merge.js";
+import { pivotCommand } from "../commands/pivot.js";
 import { readCommand } from "../commands/read.js";
-import { sheetsCommand } from "../commands/sheets.js";
 import { writeCommand } from "../commands/write.js";
 import { COMMAND_HELP, TOP_LEVEL_HELP } from "../help.js";
 import { homeCommand } from "../home.js";
@@ -52,18 +58,24 @@ function render(
 }
 
 await runAxiCli({
-	description: "AXI CLI for Excel (via negokaz/excel-mcp-server)",
+	description: "AXI CLI for Excel (via haris-musa/excel-mcp-server, run with uvx)",
 	version: readVersion(),
 	topLevelHelp: TOP_LEVEL_HELP,
 	getCommandHelp: (command: string) => COMMAND_HELP[command] ?? null,
 	home: (args: string[]) => homeCommand(args),
 	commands: {
-		sheets: render(sheetsCommand),
+		create: render(createCommand),
+		"create-sheet": render(createSheetCommand),
+		info: render(infoCommand),
 		read: render(readCommand),
 		write: render(writeCommand),
-		"create-table": render(createTableCommand),
-		"copy-sheet": render(copySheetCommand),
+		formula: render(formulaCommand),
 		"format-range": render(formatRangeCommand),
+		merge: render(mergeCommand),
+		table: render(createTableCommand),
+		chart: render(chartCommand),
+		pivot: render(pivotCommand),
+		"copy-sheet": render(copySheetCommand),
 		setup: async (args: string[]) => {
 			if (args[0] === "hooks") {
 				return setupHooksCommand("excel-axi", ["excel-axi"]);
@@ -75,7 +87,11 @@ await runAxiCli({
 	},
 });
 
-// Force exit so the MCP subprocess does not keep Node alive after the command
-// completes. The "exit" event fires synchronously, triggering _syncKillChild()
-// on every live McpStdioClient so the child is SIGKILL'd before Node exits.
+// Await graceful teardown of all live MCP child processes before exiting so
+// the Python server has a chance to flush stderr and exit cleanly. Without
+// this, the child's stderr pipe is closed by Node before the child exits,
+// causing "ValueError: I/O operation on closed file" / "Service stopped."
+// tracebacks printed after every command. The synchronous "exit" backstop
+// (_syncKillChild) still fires for any stragglers.
+await closeAllLiveClients();
 process.exit(process.exitCode ?? 0);

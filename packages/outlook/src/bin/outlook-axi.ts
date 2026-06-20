@@ -10,7 +10,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AxiError, runAxiCli, setupHooksCommand } from "@axi-office/core";
+import { AxiError, closeAllLiveClients, runAxiCli, setupHooksCommand } from "@axi-office/core";
 import { calCreateCommand, calListCommand, calViewCommand } from "../commands/calendar.js";
 import { contactsListCommand } from "../commands/contacts.js";
 import { loginCommand } from "../commands/login.js";
@@ -79,7 +79,8 @@ await runAxiCli({
 	},
 });
 
-// Force exit so the MCP subprocess does not keep Node alive after the command
-// completes. The "exit" event fires synchronously, triggering _syncKillChild()
-// on every live McpStdioClient so the child is SIGKILL'd before Node exits.
+// Await graceful teardown of all live MCP child processes before exiting so
+// the MCP server has a chance to flush stderr and exit cleanly. The synchronous
+// "exit" backstop (_syncKillChild) still fires for any stragglers.
+await closeAllLiveClients();
 process.exit(process.exitCode ?? 0);

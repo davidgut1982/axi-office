@@ -5,7 +5,12 @@
  * The tests verify argument shaping and lifecycle behavior.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { McpClientError, McpStdioClient, _getLiveClientsForTest } from "../src/mcp-client.js";
+import {
+	McpClientError,
+	McpStdioClient,
+	_getLiveClientsForTest,
+	closeAllLiveClients,
+} from "../src/mcp-client.js";
 
 // ---------------------------------------------------------------------------
 // Mock @modelcontextprotocol/sdk
@@ -56,7 +61,7 @@ describe("McpStdioClient", () => {
 		expect(result).toEqual({ sheet: "Sheet1" });
 	});
 
-	it("passes the correct command and args to StdioClientTransport", async () => {
+	it("passes the correct command, args and stderr to StdioClientTransport", async () => {
 		mockCallTool.mockResolvedValue({
 			content: [{ type: "text", text: "{}" }],
 		});
@@ -64,12 +69,14 @@ describe("McpStdioClient", () => {
 		const client = new McpStdioClient({
 			command: "node",
 			args: ["server.js", "--port", "3000"],
+			stderr: "ignore",
 		});
 		await client.callTool("ping", {});
 
 		expect(mockTransportConstructor).toHaveBeenCalledWith({
 			command: "node",
 			args: ["server.js", "--port", "3000"],
+			stderr: "ignore",
 		});
 	});
 
@@ -217,6 +224,31 @@ describe("McpStdioClient", () => {
 		mockCallTool.mockResolvedValue({ content: [{ type: "text", text: '{"ok":true}' }] });
 		const result = await client.callTool("ping", {});
 		expect(result).toEqual({ ok: true });
+	});
+
+	it("closeAllLiveClients() closes all registered clients and empties the registry", async () => {
+		mockCallTool.mockResolvedValue({ content: [{ type: "text", text: "{}" }] });
+
+		// Drain any clients left over from earlier tests so we have a clean baseline.
+		await closeAllLiveClients();
+		vi.clearAllMocks();
+		mockClose.mockResolvedValue(undefined);
+
+		const clientA = new McpStdioClient({ command: "npx", args: ["mcp-a"] });
+		const clientB = new McpStdioClient({ command: "npx", args: ["mcp-b"] });
+		await clientA.connect();
+		await clientB.connect();
+
+		expect(_getLiveClientsForTest().has(clientA)).toBe(true);
+		expect(_getLiveClientsForTest().has(clientB)).toBe(true);
+
+		await closeAllLiveClients();
+
+		// Both clients must have been closed and removed from the registry.
+		expect(_getLiveClientsForTest().has(clientA)).toBe(false);
+		expect(_getLiveClientsForTest().has(clientB)).toBe(false);
+		// mockClose is shared across all Client instances (single mock).
+		expect(mockClose).toHaveBeenCalledTimes(2);
 	});
 
 	it("clears connectPromise on connect failure so a subsequent call retries", async () => {

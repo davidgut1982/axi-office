@@ -58,6 +58,7 @@ export {
 	McpClientError,
 	callHttpTool,
 	setAutoExitOnSignal,
+	closeAllLiveClients,
 } from "./mcp-client.js";
 
 export type {
