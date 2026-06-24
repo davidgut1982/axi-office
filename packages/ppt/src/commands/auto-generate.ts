@@ -3,13 +3,13 @@
  * command for agents; this maps `auto-generate` to auto_generate_presentation.
  * What: Validates <file> and <topic>, parses optional flags for slide count, type,
  * color scheme, and media options, validates enum values, then calls
- * auto_generate_presentation via withCreateSave.
+ * auto_generate_presentation via withCreateSave with presentation_id.
  * Test: Mock the client, call autoGenerateCommand(["/tmp/x.pptx","AI trends"]), assert
  * callTool called with "create_presentation" then "auto_generate_presentation" then
  * "save_presentation". Also: pass invalid --type and assert AxiError VALIDATION_ERROR.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withCreateSave } from "../session.js";
+import { call, withCreateSave } from "../session.js";
 
 const VALID_TYPES = ["business", "academic", "creative"] as const;
 const VALID_COLOR_SCHEMES = ["modern_blue", "corporate_gray", "elegant_green", "warm_red"] as const;
@@ -51,16 +51,17 @@ export async function autoGenerateCommand(args: string[]): Promise<unknown> {
 	const includeCharts = flags["no-charts"] !== true;
 	const includeImages = flags.images === true ? true : undefined;
 
-	return withCreateSave(file, async (client) => {
+	return withCreateSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
 			topic,
 			slide_count: slideCount,
 			presentation_type: presentationType,
 			color_scheme: colorScheme,
 			include_charts: includeCharts,
+			presentation_id: presentationId,
 		};
 		if (includeImages !== undefined) toolArgs.include_images = includeImages;
 
-		return client.callTool("auto_generate_presentation", toolArgs);
+		return call(client, "auto_generate_presentation", toolArgs);
 	});
 }

@@ -2,12 +2,12 @@
  * Why: Template-based layouts use named/indexed placeholders for titles and body text;
  * this maps `set-placeholder` to populate_placeholder.
  * What: Validates <file> <slide-index> <placeholder-idx> <text>, opens with save, and
- * calls populate_placeholder with the parsed integer indices.
+ * calls populate_placeholder with the parsed integer indices and presentation_id.
  * Test: Mock the client, call setPlaceholderCommand(["/tmp/x.pptx", "0", "0", "Hello"]),
  * assert callTool called with "populate_placeholder" and matching args. Save also called.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function setPlaceholderCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
@@ -35,11 +35,12 @@ export async function setPlaceholderCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("placeholder-idx must be a non-negative integer", "VALIDATION_ERROR");
 	}
 
-	return withOpenSave(file, async (client) => {
-		return client.callTool("populate_placeholder", {
+	return withOpenSave(file, async (client, presentationId) => {
+		return call(client, "populate_placeholder", {
 			slide_index: slideIndex,
 			placeholder_idx: placeholderIdx,
 			text,
+			presentation_id: presentationId,
 		});
 	});
 }

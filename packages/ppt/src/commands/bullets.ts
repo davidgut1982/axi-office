@@ -2,13 +2,13 @@
  * Why: Bullet points are the canonical way to present lists; this maps `bullets` to
  * add_bullet_points, accepting a JSON array of strings as the points.
  * What: Validates <file> <slide-index> <placeholder-idx> <points-json>, parses the
- * JSON array, and calls add_bullet_points via withOpenSave.
+ * JSON array, and calls add_bullet_points via withOpenSave with presentation_id.
  * Test: Mock the client, call bulletsCommand(["/tmp/x.pptx", "0", "1", '["A","B"]']),
  * assert callTool called with "add_bullet_points" and bullet_points === ["A","B"].
  * Also: pass invalid JSON and assert AxiError VALIDATION_ERROR.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function bulletsCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
@@ -54,11 +54,12 @@ export async function bulletsCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return withOpenSave(file, async (client) => {
-		return client.callTool("add_bullet_points", {
+	return withOpenSave(file, async (client, presentationId) => {
+		return call(client, "add_bullet_points", {
 			slide_index: slideIndex,
 			placeholder_idx: placeholderIdx,
 			bullet_points: bulletPoints,
+			presentation_id: presentationId,
 		});
 	});
 }

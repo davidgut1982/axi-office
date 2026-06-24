@@ -4,10 +4,10 @@
  * What: Validates <file>, requires at least one property flag, opens with save, and
  * calls set_core_properties with only the provided flags (no undefined values sent).
  * Test: Mock the client, call setPropsCommand(["/tmp/x.pptx", "--title", "My Deck"]),
- * assert callTool was invoked with set_core_properties and { title: "My Deck" } only.
+ * assert callTool was invoked with set_core_properties and { title: "My Deck", presentation_id: ... }.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function setPropsCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
@@ -31,7 +31,7 @@ export async function setPropsCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return withOpenSave(file, async (client) => {
-		return client.callTool("set_core_properties", propArgs);
+	return withOpenSave(file, async (client, presentationId) => {
+		return call(client, "set_core_properties", { ...propArgs, presentation_id: presentationId });
 	});
 }

@@ -3,12 +3,13 @@
  * manage_image with operation="add" and source_type="file".
  * What: Validates <file> <slide-index> <image-path>, applies position defaults
  * (left=1, top=1), and conditionally includes width/height only when provided.
+ * Passes presentation_id to manage_image.
  * Test: Mock the client, call addImageCommand(["/tmp/x.pptx","0","/img.png"]), assert
  * callTool called with manage_image, operation="add", image_source="/img.png",
  * source_type="file". Also: pass --width 4 and assert width=4 is in args.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function addImageCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
@@ -27,7 +28,7 @@ export async function addImageCommand(args: string[]): Promise<unknown> {
 	const left = Number.parseFloat(typeof flags.left === "string" ? flags.left : "1");
 	const top = Number.parseFloat(typeof flags.top === "string" ? flags.top : "1");
 
-	return withOpenSave(file, async (client) => {
+	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
 			operation: "add",
 			slide_index: slideIndex,
@@ -35,10 +36,11 @@ export async function addImageCommand(args: string[]): Promise<unknown> {
 			source_type: "file",
 			left,
 			top,
+			presentation_id: presentationId,
 		};
 		if (typeof flags.width === "string") toolArgs.width = Number.parseFloat(flags.width);
 		if (typeof flags.height === "string") toolArgs.height = Number.parseFloat(flags.height);
 
-		return client.callTool("manage_image", toolArgs);
+		return call(client, "manage_image", toolArgs);
 	});
 }

@@ -21,7 +21,7 @@ export async function createCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return withCreateSave(file, async (_client) => {
+	return withCreateSave(file, async (_client, _presentationId) => {
 		return { created: file };
 	});
 }

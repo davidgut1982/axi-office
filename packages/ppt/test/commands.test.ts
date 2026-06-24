@@ -37,7 +37,16 @@ import { templatesCommand } from "../src/commands/templates.js";
 describe("ppt commands (GongRzhe backend)", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockCallTool.mockResolvedValue({ ok: true });
+		mockCallTool.mockImplementation(async (tool: string) => {
+			if (
+				tool === "create_presentation" ||
+				tool === "open_presentation" ||
+				tool === "create_presentation_from_template"
+			) {
+				return { presentation_id: "presentation_1" };
+			}
+			return { ok: true };
+		});
 	});
 
 	// helper: return all tool names called in order
@@ -49,7 +58,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("create calls create_presentation then save_presentation", async () => {
 		await createCommand(["/tmp/x.pptx"]);
 		expect(calledTools()).toEqual(["create_presentation", "save_presentation"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({ file_path: "/tmp/x.pptx" });
+		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({
+			file_path: "/tmp/x.pptx",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("create requires a file", async () => {
@@ -75,12 +87,19 @@ describe("ppt commands (GongRzhe backend)", () => {
 			"set_core_properties",
 			"save_presentation",
 		]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({ title: "My Deck" });
+		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
+			title: "My Deck",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("set-props passes multiple props", async () => {
 		await setPropsCommand(["/tmp/x.pptx", "--title", "T", "--author", "A"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({ title: "T", author: "A" });
+		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
+			title: "T",
+			author: "A",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("set-props requires file", async () => {
@@ -99,7 +118,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 			"save_presentation",
 		]);
 		expect(mockCallTool.mock.calls[0]?.[1]).toMatchObject({ template_path: "/tmp/tmpl.pptx" });
-		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({ file_path: "/tmp/out.pptx" });
+		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({
+			file_path: "/tmp/out.pptx",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("from-template requires file and template-path", async () => {
@@ -110,7 +132,14 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("add-slide calls open→add_slide→save with default layout_index=1", async () => {
 		await addSlideCommand(["/tmp/x.pptx"]);
 		expect(calledTools()).toEqual(["open_presentation", "add_slide", "save_presentation"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({ layout_index: 1 });
+		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({
+			layout_index: 1,
+			presentation_id: "presentation_1",
+		});
+		expect(mockCallTool.mock.calls[2]?.[1]).toMatchObject({
+			file_path: "/tmp/x.pptx",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("add-slide passes --title and --color-scheme when provided", async () => {
@@ -138,7 +167,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("slide-info calls open_presentation then get_slide_info (no save)", async () => {
 		await slideInfoCommand(["/tmp/x.pptx", "0"]);
 		expect(calledTools()).toEqual(["open_presentation", "get_slide_info"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({ slide_index: 0 });
+		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
+			slide_index: 0,
+			presentation_id: "presentation_1",
+		});
 		expect(calledTools()).not.toContain("save_presentation");
 	});
 
@@ -154,7 +186,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("read calls open_presentation then extract_presentation_text (no save)", async () => {
 		await readCommand(["/tmp/x.pptx"]);
 		expect(calledTools()).toEqual(["open_presentation", "extract_presentation_text"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({ include_slide_info: true });
+		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
+			include_slide_info: true,
+			presentation_id: "presentation_1",
+		});
 		expect(calledTools()).not.toContain("save_presentation");
 	});
 
@@ -166,7 +201,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("read-slide calls open_presentation then extract_slide_text (no save)", async () => {
 		await readSlideCommand(["/tmp/x.pptx", "2"]);
 		expect(calledTools()).toEqual(["open_presentation", "extract_slide_text"]);
-		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({ slide_index: 2 });
+		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
+			slide_index: 2,
+			presentation_id: "presentation_1",
+		});
 		expect(calledTools()).not.toContain("save_presentation");
 	});
 
@@ -186,6 +224,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			slide_index: 0,
 			placeholder_idx: 0,
 			text: "Hello",
+			presentation_id: "presentation_1",
 		});
 	});
 
@@ -207,6 +246,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			slide_index: 0,
 			placeholder_idx: 1,
 			bullet_points: ["A", "B", "C"],
+			presentation_id: "presentation_1",
 		});
 	});
 
@@ -239,6 +279,11 @@ describe("ppt commands (GongRzhe backend)", () => {
 			top: 1,
 			width: 4,
 			height: 2,
+			presentation_id: "presentation_1",
+		});
+		expect(mockCallTool.mock.calls[2]?.[1]).toMatchObject({
+			file_path: "/tmp/x.pptx",
+			presentation_id: "presentation_1",
 		});
 	});
 
@@ -282,6 +327,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			source_type: "file",
 			left: 1,
 			top: 1,
+			presentation_id: "presentation_1",
 		});
 		expect(toolArgs).not.toHaveProperty("width");
 		expect(toolArgs).not.toHaveProperty("height");
@@ -310,9 +356,14 @@ describe("ppt commands (GongRzhe backend)", () => {
 			top: 1,
 			width: 8,
 			height: 4,
+			presentation_id: "presentation_1",
 		});
 		expect(toolArgs).not.toHaveProperty("data");
 		expect(toolArgs).not.toHaveProperty("header_row");
+		expect(mockCallTool.mock.calls[2]?.[1]).toMatchObject({
+			file_path: "/tmp/x.pptx",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("add-table passes --data and --header-row when provided", async () => {
@@ -370,6 +421,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			top: 1,
 			width: 2,
 			height: 2,
+			presentation_id: "presentation_1",
 		});
 	});
 
@@ -415,6 +467,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			series_values: [[100, 200, 300]],
 			has_legend: true,
 			legend_position: "right",
+			presentation_id: "presentation_1",
 		});
 	});
 
@@ -490,8 +543,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 			presentation_type: "business",
 			color_scheme: "modern_blue",
 			include_charts: true,
+			presentation_id: "presentation_1",
 		});
-		expect(mockCallTool.mock.calls[2]?.[1]).toMatchObject({ file_path: "/tmp/x.pptx" });
+		expect(mockCallTool.mock.calls[2]?.[1]).toMatchObject({
+			file_path: "/tmp/x.pptx",
+			presentation_id: "presentation_1",
+		});
 	});
 
 	it("auto-generate passes --slides, --type, --color-scheme", async () => {
@@ -533,5 +590,16 @@ describe("ppt commands (GongRzhe backend)", () => {
 
 	it("auto-generate requires file and topic", async () => {
 		await expect(autoGenerateCommand(["/tmp/x.pptx"])).rejects.toBeInstanceOf(AxiError);
+	});
+
+	// --- BUG 2: backend error surfacing ---
+	it("surfaces backend error when callTool returns { error: '...' }", async () => {
+		mockCallTool.mockImplementation(async (tool: string) => {
+			if (tool === "open_presentation") return { presentation_id: "presentation_1" };
+			if (tool === "get_presentation_info")
+				return { error: "No presentation is currently loaded" };
+			return { ok: true };
+		});
+		await expect(infoCommand(["/tmp/x.pptx"])).rejects.toBeInstanceOf(AxiError);
 	});
 });

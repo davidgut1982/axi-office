@@ -21,7 +21,7 @@ export async function fromTemplateCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return withCreateFromTemplateSave(templatePath, file, async (_client) => {
+	return withCreateFromTemplateSave(templatePath, file, async (_client, _presentationId) => {
 		return { created: file, template: templatePath };
 	});
 }

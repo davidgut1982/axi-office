@@ -1,12 +1,13 @@
 /**
  * Why: Reading a single slide's text lets agents work with targeted content without
  * retrieving the whole deck; this maps `read-slide` to extract_slide_text.
- * What: Validates <file> and <slide-index>, opens read-only, calls extract_slide_text.
+ * What: Validates <file> and <slide-index>, opens read-only, calls extract_slide_text
+ * with slide_index and presentation_id.
  * Test: Mock the client, call readSlideCommand(["/tmp/x.pptx", "2"]), assert callTool
- * called with "extract_slide_text" and { slide_index: 2 }. No save call.
+ * called with "extract_slide_text" and { slide_index: 2, presentation_id: ... }. No save call.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenReadonly } from "../session.js";
+import { call, withOpenReadonly } from "../session.js";
 
 export async function readSlideCommand(args: string[]): Promise<unknown> {
 	const { positionals } = parseFlags(args);
@@ -23,7 +24,10 @@ export async function readSlideCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("slide-index must be a non-negative integer", "VALIDATION_ERROR");
 	}
 
-	return withOpenReadonly(file, async (client) => {
-		return client.callTool("extract_slide_text", { slide_index: slideIndex });
+	return withOpenReadonly(file, async (client, presentationId) => {
+		return call(client, "extract_slide_text", {
+			slide_index: slideIndex,
+			presentation_id: presentationId,
+		});
 	});
 }

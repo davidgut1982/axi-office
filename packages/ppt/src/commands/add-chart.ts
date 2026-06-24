@@ -3,13 +3,13 @@
  * series/category data supplied as JSON arrays.
  * What: Validates <file> <slide-index> <chart-type> and three JSON positionals
  * (categories, series-names, series-values), applies position/size defaults,
- * and calls add_chart via withOpenSave.
+ * and calls add_chart via withOpenSave with presentation_id.
  * Test: Mock the client, call addChartCommand with valid args, assert callTool called
  * with "add_chart" and correct categories/series_names/series_values. Also: pass an
  * invalid chart-type and assert AxiError VALIDATION_ERROR.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 const VALID_CHART_TYPES = ["column", "bar", "line", "pie"] as const;
 
@@ -96,7 +96,7 @@ export async function addChartCommand(args: string[]): Promise<unknown> {
 	const width = Number.parseFloat(typeof flags.width === "string" ? flags.width : "8");
 	const height = Number.parseFloat(typeof flags.height === "string" ? flags.height : "5");
 
-	return withOpenSave(file, async (client) => {
+	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
 			slide_index: slideIndex,
 			chart_type: chartType,
@@ -110,9 +110,10 @@ export async function addChartCommand(args: string[]): Promise<unknown> {
 			has_legend: true,
 			legend_position:
 				typeof flags["legend-position"] === "string" ? flags["legend-position"] : "right",
+			presentation_id: presentationId,
 		};
 		if (typeof flags.title === "string") toolArgs.title = flags.title;
 
-		return client.callTool("add_chart", toolArgs);
+		return call(client, "add_chart", toolArgs);
 	});
 }

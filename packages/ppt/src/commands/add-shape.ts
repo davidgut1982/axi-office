@@ -3,12 +3,13 @@
  * elements; this maps `add-shape` to add_shape.
  * What: Validates <file> <slide-index> <shape-type>, applies position/size defaults,
  * parses optional --text, --fill-color, --line-color flags.
+ * Passes presentation_id to add_shape.
  * Test: Mock the client, call addShapeCommand(["/tmp/x.pptx","0","rectangle"]),
  * assert callTool called with "add_shape" and shape_type="rectangle" with defaults.
  * Also: pass --fill-color "255,0,0" and assert fill_color is [255,0,0].
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 import { parseColor } from "../utils.js";
 
 export async function addShapeCommand(args: string[]): Promise<unknown> {
@@ -31,7 +32,7 @@ export async function addShapeCommand(args: string[]): Promise<unknown> {
 	const width = Number.parseFloat(typeof flags.width === "string" ? flags.width : "2");
 	const height = Number.parseFloat(typeof flags.height === "string" ? flags.height : "2");
 
-	return withOpenSave(file, async (client) => {
+	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
 			slide_index: slideIndex,
 			shape_type: shapeType,
@@ -39,6 +40,7 @@ export async function addShapeCommand(args: string[]): Promise<unknown> {
 			top,
 			width,
 			height,
+			presentation_id: presentationId,
 		};
 		if (typeof flags.text === "string") toolArgs.text = flags.text;
 		if (typeof flags["fill-color"] === "string") {
@@ -48,6 +50,6 @@ export async function addShapeCommand(args: string[]): Promise<unknown> {
 			toolArgs.line_color = parseColor(flags["line-color"], "--line-color");
 		}
 
-		return client.callTool("add_shape", toolArgs);
+		return call(client, "add_shape", toolArgs);
 	});
 }

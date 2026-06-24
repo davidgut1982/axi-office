@@ -2,13 +2,13 @@
  * Why: Slides are the fundamental content unit; this maps `add-slide` to the add_slide
  * MCP tool which appends a slide with the given layout, optional title, and color scheme.
  * What: Validates <file>, parses optional --layout, --title, --color-scheme flags,
- * and calls add_slide via withOpenSave with only provided optional fields.
+ * and calls add_slide via withOpenSave with only provided optional fields, plus presentation_id.
  * Test: Mock the client, call addSlideCommand(["/tmp/x.pptx"]), assert callTool was
  * invoked with add_slide and layout_index=1 (default). Also: pass --title "Hello" and
  * assert title is included in the tool args.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function addSlideCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
@@ -27,10 +27,13 @@ export async function addSlideCommand(args: string[]): Promise<unknown> {
 		]);
 	}
 
-	return withOpenSave(file, async (client) => {
-		const toolArgs: Record<string, unknown> = { layout_index: layoutIndex };
+	return withOpenSave(file, async (client, presentationId) => {
+		const toolArgs: Record<string, unknown> = {
+			layout_index: layoutIndex,
+			presentation_id: presentationId,
+		};
 		if (typeof flags.title === "string") toolArgs.title = flags.title;
 		if (typeof flags["color-scheme"] === "string") toolArgs.color_scheme = flags["color-scheme"];
-		return client.callTool("add_slide", toolArgs);
+		return call(client, "add_slide", toolArgs);
 	});
 }

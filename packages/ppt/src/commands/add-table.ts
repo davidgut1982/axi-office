@@ -3,12 +3,13 @@
  * add_table. The backend requires left/top/width/height so CLI defaults are supplied.
  * What: Validates <file> <slide-index> <rows> <cols>, applies position/size defaults,
  * parses optional --data <json-2d> (string[][]) and --header-row flag.
+ * Passes presentation_id to add_table.
  * Test: Mock the client, call addTableCommand(["/tmp/x.pptx","0","3","4"]), assert
  * callTool called with "add_table" and rows=3, cols=4 and default dimensions.
  * Also: pass invalid --data and assert AxiError VALIDATION_ERROR.
  */
 import { AxiError, parseFlags } from "@axi-office/core";
-import { withOpenSave } from "../session.js";
+import { call, withOpenSave } from "../session.js";
 
 export async function addTableCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args, ["header-row"]);
@@ -61,7 +62,7 @@ export async function addTableCommand(args: string[]): Promise<unknown> {
 		data = parsed as unknown[][];
 	}
 
-	return withOpenSave(file, async (client) => {
+	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
 			slide_index: slideIndex,
 			rows,
@@ -70,10 +71,11 @@ export async function addTableCommand(args: string[]): Promise<unknown> {
 			top,
 			width,
 			height,
+			presentation_id: presentationId,
 		};
 		if (data !== undefined) toolArgs.data = data;
 		if (flags["header-row"] === true) toolArgs.header_row = true;
 
-		return client.callTool("add_table", toolArgs);
+		return call(client, "add_table", toolArgs);
 	});
 }
