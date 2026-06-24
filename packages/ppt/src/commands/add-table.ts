@@ -51,7 +51,7 @@ export async function addTableCommand(args: string[]): Promise<unknown> {
 				'Example: \'[["Name","Score"],["Alice","90"]]\'',
 			]);
 		}
-		if (!Array.isArray(parsed) || (parsed.length > 0 && !Array.isArray(parsed[0]))) {
+		if (!Array.isArray(parsed) || !parsed.every((r) => Array.isArray(r))) {
 			throw new AxiError(
 				"--data must be a 2D JSON array (array of row arrays)",
 				"VALIDATION_ERROR",

@@ -10,16 +10,7 @@
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { withOpenSave } from "../session.js";
-
-function parseColor(colorStr: string): [number, number, number] {
-	const parts = colorStr.split(",").map((s) => Number.parseInt(s.trim(), 10));
-	if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) {
-		throw new AxiError(`--color "${colorStr}" is not a valid R,G,B triplet`, "VALIDATION_ERROR", [
-			"Example: --color 255,0,0",
-		]);
-	}
-	return parts as [number, number, number];
-}
+import { parseColor } from "../utils.js";
 
 export async function addTextCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args, ["bold", "italic", "underline"]);
@@ -53,13 +44,19 @@ export async function addTextCommand(args: string[]): Promise<unknown> {
 			height,
 		};
 		if (typeof flags["font-size"] === "string") {
-			toolArgs.font_size = Number.parseInt(flags["font-size"], 10);
+			const fontSize = Number.parseInt(flags["font-size"], 10);
+			if (!Number.isFinite(fontSize) || fontSize <= 0) {
+				throw new AxiError("--font-size must be a positive integer", "VALIDATION_ERROR", [
+					"Example: --font-size 24",
+				]);
+			}
+			toolArgs.font_size = fontSize;
 		}
 		if (typeof flags["font-name"] === "string") toolArgs.font_name = flags["font-name"];
 		if (flags.bold === true) toolArgs.bold = true;
 		if (flags.italic === true) toolArgs.italic = true;
 		if (flags.underline === true) toolArgs.underline = true;
-		if (typeof flags.color === "string") toolArgs.color = parseColor(flags.color);
+		if (typeof flags.color === "string") toolArgs.color = parseColor(flags.color, "--color");
 		if (typeof flags.align === "string") toolArgs.align = flags.align;
 
 		return client.callTool("manage_text", toolArgs);

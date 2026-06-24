@@ -264,6 +264,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 		await expect(addTextCommand(["/tmp/x.pptx", "0"])).rejects.toBeInstanceOf(AxiError);
 	});
 
+	it("add-text rejects non-numeric --font-size", async () => {
+		await expect(
+			addTextCommand(["/tmp/x.pptx", "0", "Hi", "--font-size", "abc"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
 	// --- add-image ---
 	it("add-image calls open→manage_image→save with operation=add source_type=file", async () => {
 		await addImageCommand(["/tmp/x.pptx", "0", "/img.png"]);
@@ -333,6 +339,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("add-table rejects flat (1D) --data", async () => {
 		await expect(
 			addTableCommand(["/tmp/x.pptx", "0", "2", "2", "--data", '["a","b"]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("add-table rejects mixed --data where later rows are not arrays", async () => {
+		await expect(
+			addTableCommand(["/tmp/x.pptx", "0", "2", "2", "--data", '[["a","b"],"bad"]'])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
@@ -442,6 +454,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("add-chart rejects flat (1D) series-values", async () => {
 		await expect(
 			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[1,2,3]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("add-chart rejects mixed series-values where a later element is not an array", async () => {
+		await expect(
+			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[[1,2],42]'])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 

@@ -6,7 +6,13 @@
  * and assert they are defined.
  */
 export { getClient } from "./client.js";
-export { withOpenSave, withOpenReadonly, withCreateSave } from "./session.js";
+export {
+	withOpenSave,
+	withOpenReadonly,
+	withCreateSave,
+	withCreateFromTemplateSave,
+} from "./session.js";
+export { parseColor } from "./utils.js";
 export { TOP_LEVEL_HELP, COMMAND_HELP } from "./help.js";
 export { homeCommand } from "./home.js";
 export { createCommand } from "./commands/create.js";

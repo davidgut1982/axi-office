@@ -3,7 +3,8 @@
  * presentation" in memory and only persists it on save_presentation. Every ppt-axi
  * invocation is a fresh subprocess, so each command must be self-contained:
  * open (or create) → operate → save, all over the single McpStdioClient connection.
- * What: Exports three helpers — withOpenSave, withOpenReadonly, withCreateSave — that
+ * What: Exports four helpers — withOpenSave, withOpenReadonly, withCreateSave,
+ * withCreateFromTemplateSave — that
  * manage the open/create → operate → optional-save lifecycle so command handlers only
  * implement the "operate" step.
  * Test: Mock getClient().callTool; call withOpenSave("/tmp/x.pptx", fn) and assert
@@ -55,6 +56,27 @@ export async function withCreateSave(
 ): Promise<unknown> {
 	const client = getClient();
 	await client.callTool("create_presentation", {});
+	const result = await fn(client);
+	await client.callTool("save_presentation", { file_path: filePath });
+	return result;
+}
+
+/**
+ * Why: Template-based creation needs the same lifecycle discipline as withCreateSave
+ * but uses create_presentation_from_template instead of create_presentation. Routing
+ * from-template through this helper ensures the open→operate→save contract is in
+ * one tested abstraction rather than raw callTool calls in the command handler.
+ * What: Calls create_presentation_from_template({template_path}), awaits fn(client),
+ * then saves to filePath.
+ * Test: Assert callTool order: create_presentation_from_template → [fn calls] → save_presentation.
+ */
+export async function withCreateFromTemplateSave(
+	templatePath: string,
+	filePath: string,
+	fn: (client: ReturnType<typeof getClient>) => Promise<unknown>
+): Promise<unknown> {
+	const client = getClient();
+	await client.callTool("create_presentation_from_template", { template_path: templatePath });
 	const result = await fn(client);
 	await client.callTool("save_presentation", { file_path: filePath });
 	return result;

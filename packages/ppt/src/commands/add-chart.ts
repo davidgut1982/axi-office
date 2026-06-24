@@ -83,10 +83,7 @@ export async function addChartCommand(args: string[]): Promise<unknown> {
 			"Example: '[[100,200,300],[80,150,250]]'",
 		]);
 	}
-	if (
-		!Array.isArray(seriesValues) ||
-		(seriesValues.length > 0 && !Array.isArray(seriesValues[0]))
-	) {
+	if (!Array.isArray(seriesValues) || !seriesValues.every((r) => Array.isArray(r))) {
 		throw new AxiError(
 			"series-values-json must be a 2D JSON array (one array of numbers per series)",
 			"VALIDATION_ERROR",

@@ -9,18 +9,7 @@
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { withOpenSave } from "../session.js";
-
-function parseColor(colorStr: string, flagName: string): [number, number, number] {
-	const parts = colorStr.split(",").map((s) => Number.parseInt(s.trim(), 10));
-	if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) {
-		throw new AxiError(
-			`${flagName} "${colorStr}" is not a valid R,G,B triplet`,
-			"VALIDATION_ERROR",
-			[`Example: ${flagName} 255,0,0`]
-		);
-	}
-	return parts as [number, number, number];
-}
+import { parseColor } from "../utils.js";
 
 export async function addShapeCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
