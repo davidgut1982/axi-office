@@ -10,6 +10,7 @@
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { call, withOpenSave } from "../session.js";
+import { parseFloatFlag } from "../utils.js";
 
 export async function addImageCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args);
@@ -25,8 +26,10 @@ export async function addImageCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("slide-index must be a non-negative integer", "VALIDATION_ERROR");
 	}
 
-	const left = Number.parseFloat(typeof flags.left === "string" ? flags.left : "1");
-	const top = Number.parseFloat(typeof flags.top === "string" ? flags.top : "1");
+	const left = parseFloatFlag(flags.left, "--left", 1);
+	const top = parseFloatFlag(flags.top, "--top", 1);
+	const width = parseFloatFlag(flags.width, "--width");
+	const height = parseFloatFlag(flags.height, "--height");
 
 	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {
@@ -38,8 +41,8 @@ export async function addImageCommand(args: string[]): Promise<unknown> {
 			top,
 			presentation_id: presentationId,
 		};
-		if (typeof flags.width === "string") toolArgs.width = Number.parseFloat(flags.width);
-		if (typeof flags.height === "string") toolArgs.height = Number.parseFloat(flags.height);
+		if (width !== undefined) toolArgs.width = width;
+		if (height !== undefined) toolArgs.height = height;
 
 		return call(client, "manage_image", toolArgs);
 	});

@@ -11,7 +11,7 @@
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { call, withOpenSave } from "../session.js";
-import { parseColor } from "../utils.js";
+import { parseColor, parseFloatFlag } from "../utils.js";
 
 export async function addTextCommand(args: string[]): Promise<unknown> {
 	const { positionals, flags } = parseFlags(args, ["bold", "italic", "underline"]);
@@ -29,10 +29,10 @@ export async function addTextCommand(args: string[]): Promise<unknown> {
 		throw new AxiError("slide-index must be a non-negative integer", "VALIDATION_ERROR");
 	}
 
-	const left = Number.parseFloat(typeof flags.left === "string" ? flags.left : "1");
-	const top = Number.parseFloat(typeof flags.top === "string" ? flags.top : "1");
-	const width = Number.parseFloat(typeof flags.width === "string" ? flags.width : "4");
-	const height = Number.parseFloat(typeof flags.height === "string" ? flags.height : "2");
+	const left = parseFloatFlag(flags.left, "--left", 1);
+	const top = parseFloatFlag(flags.top, "--top", 1);
+	const width = parseFloatFlag(flags.width, "--width", 4);
+	const height = parseFloatFlag(flags.height, "--height", 2);
 
 	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {

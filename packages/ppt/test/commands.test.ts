@@ -315,6 +315,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
+	it("add-text rejects non-numeric --left", async () => {
+		await expect(
+			addTextCommand(["/tmp/x.pptx", "0", "Hi", "--left", "foo"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
 	// --- add-image ---
 	it("add-image calls open→manage_image→save with operation=add source_type=file", async () => {
 		await addImageCommand(["/tmp/x.pptx", "0", "/img.png"]);
@@ -337,6 +343,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 		await addImageCommand(["/tmp/x.pptx", "0", "/img.png", "--width", "4", "--height", "3"]);
 		const toolArgs = mockCallTool.mock.calls[1]?.[1] as Record<string, unknown>;
 		expect(toolArgs).toMatchObject({ width: 4, height: 3 });
+	});
+
+	it("add-image rejects non-numeric --width", async () => {
+		await expect(
+			addImageCommand(["/tmp/x.pptx", "0", "/img.png", "--width", "foo"])
+		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-image requires file, slide-index and image-path", async () => {
@@ -405,6 +417,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
+	it("add-table rejects non-numeric --width", async () => {
+		await expect(
+			addTableCommand(["/tmp/x.pptx", "0", "3", "4", "--width", "foo"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
 	it("add-table requires file, slide-index, rows, cols", async () => {
 		await expect(addTableCommand(["/tmp/x.pptx", "0", "3"])).rejects.toBeInstanceOf(AxiError);
 	});
@@ -440,6 +458,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("add-shape rejects invalid --fill-color", async () => {
 		await expect(
 			addShapeCommand(["/tmp/x.pptx", "0", "rectangle", "--fill-color", "notacolor"])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("add-shape rejects non-numeric --left", async () => {
+		await expect(
+			addShapeCommand(["/tmp/x.pptx", "0", "rectangle", "--left", "foo"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
@@ -513,6 +537,12 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("add-chart rejects mixed series-values where a later element is not an array", async () => {
 		await expect(
 			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[[1,2],42]'])
+		).rejects.toBeInstanceOf(AxiError);
+	});
+
+	it("add-chart rejects non-numeric --width", async () => {
+		await expect(
+			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[[1]]', "--width", "foo"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 

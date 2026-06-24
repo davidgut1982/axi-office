@@ -165,7 +165,7 @@ Example:
   ppt-axi templates`,
 
 	"auto-generate": `ppt-axi auto-generate <file> <topic> [--slides=5] [--type=business] [--color-scheme=modern_blue]
-  [--charts] [--no-charts] [--images]
+  [--no-charts] [--images]
 
 Auto-generate a complete presentation from a topic description.
   --type:           business, academic, creative (default: business)

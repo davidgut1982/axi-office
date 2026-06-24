@@ -20,3 +20,35 @@ export function parseColor(colorStr: string, flagName: string): [number, number,
 	}
 	return parts as [number, number, number];
 }
+
+/**
+ * Why: Numeric position/size flags (--left/--top/--width/--height) feed straight into the
+ * backend; a non-numeric value yields NaN, which JSON-serializes to null over the MCP
+ * transport and produces a confusing backend error instead of a clean VALIDATION_ERROR.
+ * What: Parses a float flag, returning defaultValue when the flag is absent and throwing
+ * AxiError VALIDATION_ERROR when present but non-finite. With no defaultValue, returns
+ * undefined for absent flags (for flags that are only forwarded when supplied).
+ * Test: parseFloatFlag("2.5", "--left", 1) → 2.5; parseFloatFlag(undefined, "--left", 1) → 1;
+ * parseFloatFlag("foo", "--left", 1) → throws AxiError VALIDATION_ERROR;
+ * parseFloatFlag(undefined, "--width") → undefined.
+ */
+export function parseFloatFlag(value: unknown, flagName: string, defaultValue: number): number;
+export function parseFloatFlag(
+	value: unknown,
+	flagName: string,
+	defaultValue?: undefined
+): number | undefined;
+export function parseFloatFlag(
+	value: unknown,
+	flagName: string,
+	defaultValue?: number
+): number | undefined {
+	if (typeof value !== "string") return defaultValue;
+	const parsed = Number.parseFloat(value);
+	if (!Number.isFinite(parsed)) {
+		throw new AxiError(`${flagName} "${value}" is not a valid number`, "VALIDATION_ERROR", [
+			`Example: ${flagName} 1.5`,
+		]);
+	}
+	return parsed;
+}

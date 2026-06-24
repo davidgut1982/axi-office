@@ -10,6 +10,7 @@
  */
 import { AxiError, parseFlags } from "@axi-office/core";
 import { call, withOpenSave } from "../session.js";
+import { parseFloatFlag } from "../utils.js";
 
 const VALID_CHART_TYPES = ["column", "bar", "line", "pie"] as const;
 
@@ -91,10 +92,10 @@ export async function addChartCommand(args: string[]): Promise<unknown> {
 		);
 	}
 
-	const left = Number.parseFloat(typeof flags.left === "string" ? flags.left : "1");
-	const top = Number.parseFloat(typeof flags.top === "string" ? flags.top : "1");
-	const width = Number.parseFloat(typeof flags.width === "string" ? flags.width : "8");
-	const height = Number.parseFloat(typeof flags.height === "string" ? flags.height : "5");
+	const left = parseFloatFlag(flags.left, "--left", 1);
+	const top = parseFloatFlag(flags.top, "--top", 1);
+	const width = parseFloatFlag(flags.width, "--width", 8);
+	const height = parseFloatFlag(flags.height, "--height", 5);
 
 	return withOpenSave(file, async (client, presentationId) => {
 		const toolArgs: Record<string, unknown> = {

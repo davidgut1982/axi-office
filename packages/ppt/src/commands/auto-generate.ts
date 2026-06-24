@@ -15,12 +15,12 @@ const VALID_TYPES = ["business", "academic", "creative"] as const;
 const VALID_COLOR_SCHEMES = ["modern_blue", "corporate_gray", "elegant_green", "warm_red"] as const;
 
 export async function autoGenerateCommand(args: string[]): Promise<unknown> {
-	const { positionals, flags } = parseFlags(args, ["charts", "no-charts", "images"]);
+	const { positionals, flags } = parseFlags(args, ["no-charts", "images"]);
 	const [file, topic] = positionals;
 	if (!file || topic === undefined) {
 		throw new AxiError("file and topic are required", "VALIDATION_ERROR", [
 			"ppt-axi auto-generate <file> <topic> [--slides=5] [--type=business] [--color-scheme=modern_blue]",
-			"  [--charts] [--no-charts] [--images]",
+			"  [--no-charts] [--images]",
 			`  --type:          one of ${VALID_TYPES.join(", ")}`,
 			`  --color-scheme:  one of ${VALID_COLOR_SCHEMES.join(", ")}`,
 		]);
