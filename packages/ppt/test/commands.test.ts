@@ -27,8 +27,8 @@ import { bulletsCommand } from "../src/commands/bullets.js";
 import { createCommand } from "../src/commands/create.js";
 import { fromTemplateCommand } from "../src/commands/from-template.js";
 import { infoCommand } from "../src/commands/info.js";
-import { readCommand } from "../src/commands/read.js";
 import { readSlideCommand } from "../src/commands/read-slide.js";
+import { readCommand } from "../src/commands/read.js";
 import { setPlaceholderCommand } from "../src/commands/set-placeholder.js";
 import { setPropsCommand } from "../src/commands/set-props.js";
 import { slideInfoCommand } from "../src/commands/slide-info.js";
@@ -113,10 +113,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 	// --- from-template ---
 	it("from-template calls create_presentation_from_template then save_presentation", async () => {
 		await fromTemplateCommand(["/tmp/out.pptx", "/tmp/tmpl.pptx"]);
-		expect(calledTools()).toEqual([
-			"create_presentation_from_template",
-			"save_presentation",
-		]);
+		expect(calledTools()).toEqual(["create_presentation_from_template", "save_presentation"]);
 		expect(mockCallTool.mock.calls[0]?.[1]).toMatchObject({ template_path: "/tmp/tmpl.pptx" });
 		expect(mockCallTool.mock.calls[1]?.[1]).toMatchObject({
 			file_path: "/tmp/out.pptx",
@@ -229,19 +226,13 @@ describe("ppt commands (GongRzhe backend)", () => {
 	});
 
 	it("set-placeholder requires all four args", async () => {
-		await expect(
-			setPlaceholderCommand(["/tmp/x.pptx", "0", "0"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(setPlaceholderCommand(["/tmp/x.pptx", "0", "0"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	// --- bullets ---
 	it("bullets calls open→add_bullet_points→save with parsed array", async () => {
 		await bulletsCommand(["/tmp/x.pptx", "0", "1", '["A","B","C"]']);
-		expect(calledTools()).toEqual([
-			"open_presentation",
-			"add_bullet_points",
-			"save_presentation",
-		]);
+		expect(calledTools()).toEqual(["open_presentation", "add_bullet_points", "save_presentation"]);
 		expect(mockCallTool.mock.calls[1]?.[1]).toEqual({
 			slide_index: 0,
 			placeholder_idx: 1,
@@ -251,15 +242,15 @@ describe("ppt commands (GongRzhe backend)", () => {
 	});
 
 	it("bullets rejects invalid JSON", async () => {
-		await expect(
-			bulletsCommand(["/tmp/x.pptx", "0", "1", "not-json"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(bulletsCommand(["/tmp/x.pptx", "0", "1", "not-json"])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 
 	it("bullets rejects non-array JSON", async () => {
-		await expect(
-			bulletsCommand(["/tmp/x.pptx", "0", "1", '"a string"'])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(bulletsCommand(["/tmp/x.pptx", "0", "1", '"a string"'])).rejects.toBeInstanceOf(
+			AxiError
+		);
 	});
 
 	it("bullets requires all four args", async () => {
@@ -389,7 +380,10 @@ describe("ppt commands (GongRzhe backend)", () => {
 			"--header-row",
 		]);
 		const toolArgs = mockCallTool.mock.calls[1]?.[1] as Record<string, unknown>;
-		expect(toolArgs.data).toEqual([["Name", "Score"], ["Alice", "90"]]);
+		expect(toolArgs.data).toEqual([
+			["Name", "Score"],
+			["Alice", "90"],
+		]);
 		expect(toolArgs.header_row).toBe(true);
 	});
 
@@ -412,9 +406,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 	});
 
 	it("add-table rejects invalid rows value", async () => {
-		await expect(
-			addTableCommand(["/tmp/x.pptx", "0", "0", "3"])
-		).rejects.toBeInstanceOf(AxiError);
+		await expect(addTableCommand(["/tmp/x.pptx", "0", "0", "3"])).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-table rejects non-numeric --width", async () => {
@@ -479,7 +471,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			"column",
 			'["Q1","Q2","Q3"]',
 			'["Revenue"]',
-			'[[100,200,300]]',
+			"[[100,200,300]]",
 		]);
 		expect(calledTools()).toEqual(["open_presentation", "add_chart", "save_presentation"]);
 		const toolArgs = mockCallTool.mock.calls[1]?.[1] as Record<string, unknown>;
@@ -502,7 +494,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 			"bar",
 			'["A"]',
 			'["S"]',
-			'[[1]]',
+			"[[1]]",
 			"--title",
 			"My Chart",
 		]);
@@ -511,38 +503,38 @@ describe("ppt commands (GongRzhe backend)", () => {
 	});
 
 	it("add-chart omits title when not provided", async () => {
-		await addChartCommand(["/tmp/x.pptx", "0", "line", '["A"]', '["S"]', '[[1]]']);
+		await addChartCommand(["/tmp/x.pptx", "0", "line", '["A"]', '["S"]', "[[1]]"]);
 		const toolArgs = mockCallTool.mock.calls[1]?.[1] as Record<string, unknown>;
 		expect(toolArgs).not.toHaveProperty("title");
 	});
 
 	it("add-chart rejects invalid chart-type", async () => {
 		await expect(
-			addChartCommand(["/tmp/x.pptx", "0", "donut", '["A"]', '["S"]', '[[1]]'])
+			addChartCommand(["/tmp/x.pptx", "0", "donut", '["A"]', '["S"]', "[[1]]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-chart rejects invalid categories-json", async () => {
 		await expect(
-			addChartCommand(["/tmp/x.pptx", "0", "bar", "not-json", '["S"]', '[[1]]'])
+			addChartCommand(["/tmp/x.pptx", "0", "bar", "not-json", '["S"]', "[[1]]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-chart rejects flat (1D) series-values", async () => {
 		await expect(
-			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[1,2,3]'])
+			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', "[1,2,3]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-chart rejects mixed series-values where a later element is not an array", async () => {
 		await expect(
-			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[[1,2],42]'])
+			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', "[[1,2],42]"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
 	it("add-chart rejects non-numeric --width", async () => {
 		await expect(
-			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', '[[1]]', "--width", "foo"])
+			addChartCommand(["/tmp/x.pptx", "0", "bar", '["A"]', '["S"]', "[[1]]", "--width", "foo"])
 		).rejects.toBeInstanceOf(AxiError);
 	});
 
@@ -626,8 +618,7 @@ describe("ppt commands (GongRzhe backend)", () => {
 	it("surfaces backend error when callTool returns { error: '...' }", async () => {
 		mockCallTool.mockImplementation(async (tool: string) => {
 			if (tool === "open_presentation") return { presentation_id: "presentation_1" };
-			if (tool === "get_presentation_info")
-				return { error: "No presentation is currently loaded" };
+			if (tool === "get_presentation_info") return { error: "No presentation is currently loaded" };
 			return { ok: true };
 		});
 		await expect(infoCommand(["/tmp/x.pptx"])).rejects.toBeInstanceOf(AxiError);
