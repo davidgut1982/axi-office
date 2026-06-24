@@ -9,7 +9,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "node node_modules/@biomejs/biome/bin/biome check packages/core/src packages/excel/src packages/word/src packages/outlook/src",
+    "lint": "node node_modules/@biomejs/biome/bin/biome check packages/core/src packages/excel/src packages/word/src packages/outlook/src packages/ppt/src",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
