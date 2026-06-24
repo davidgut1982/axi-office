@@ -1,8 +1,16 @@
 {
 	"name": "@axi-office/ppt",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "AXI CLI for PowerPoint — wraps GongRzhe/Office-PowerPoint-MCP-Server (runs via uvx)",
-	"keywords": ["axi", "agent", "cli", "powerpoint", "pptx", "mcp", "office"],
+	"keywords": [
+		"axi",
+		"agent",
+		"cli",
+		"powerpoint",
+		"pptx",
+		"mcp",
+		"office"
+	],
 	"license": "MIT",
 	"type": "module",
 	"engines": {
@@ -11,7 +19,10 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"bin": {
 		"ppt-axi": "./dist/bin/ppt-axi.js"
 	},
